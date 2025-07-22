@@ -10,10 +10,18 @@ def format_ticket_info(ticket_info: dict) -> str:
 import json
 from datetime import datetime
 from pathlib import Path
+from enum import Enum
 
 # 全局变量，缓存城市代码数据
 city_code_data = None
 
+class Act(Enum):
+    CHAT = 0
+    RESTAURANT_RECOMMEND = 1
+    CUISINE_RECOMMEND = 2
+    TRAIN_QUERY = 3
+    WEATHER_QUERY = 4
+    
 def get_city_code_map():
     """加载并缓存城市代码数据"""
     global city_code_data
