@@ -1,0 +1,36 @@
+asgiref==3.8.1
+setuptools==70.0.0
+sqlparse==0.5.2
+tzdata==2024.2
+wheel==0.42.0
+requests==2.32.3
+tqdm==4.67.1
+numpy==1.26.4
+psutil==5.9.8
+pandas==2.2.3
+
+# 核心Web框架依赖（放前面确保优先安装）
+uvicorn==0.29.0
+fastapi==0.115.2
+starlette>=0.37.2,<0.41.0
+
+# 机器学习相关依赖 注释掉的单独安装
+#torch==2.7.0
+#kmeans-pytorch==0.3.0
+#recbole==1.2.0
+#transformers==4.50.0
+#gradio==5.23.1
+OpenAI==1.68.2
+scikit-learn==1.6.1
+json5==0.12.0
+pydantic==2.6.4
+aiohttp==3.11.14
+python-jose[cryptography]==3.4.0
+passlib[bcrypt]==1.7.4
+
+pyjwt==2.10.1
+sqlalchemy==2.0.40
+pymysql==1.1.1
+pyyaml==6.0.2
+#faiss-cpu==1.7.4
+#python-Levenshtein==0.23.0

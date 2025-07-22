@@ -1,0 +1,5 @@
+# 机器学习相关依赖 注释掉的单独安装
+torch==2.7.0
+kmeans-pytorch==0.3.0
+recbole==1.2.0
+transformers==4.50.0
