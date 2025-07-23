@@ -1,4 +1,11 @@
 # utils.py
+
+class Tool():
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+
 def format_ticket_info(ticket_info: dict) -> str:
     """
     格式化票务信息

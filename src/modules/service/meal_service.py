@@ -1,11 +1,23 @@
 import pandas as pd
 from openai import OpenAI
-import re, json, faiss
+import re, json
 import numpy as np
-from . import Tool
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+from src.modules.service.utils import Tool
 from sklearn.metrics.pairwise import cosine_similarity
 import Levenshtein
 import time
+from typing import Iterable
+
+
+
+# 路径常量集中管理
+import os
+PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+DATASET_ITEM_PATH = os.path.join(PATH_TO_ROOT, 'dataset', 'meal_service', 'item.csv')
+
+
 
 recommend_prompt = \
 '''
@@ -54,7 +66,7 @@ encoding_prompt = \
   "微辣": <是否微辣>,
   "中辣": <是否中辣>,
   "特辣": <是否特辣>,
-  "价格": <价格>,
+  "价格": [<价格下限>, <价格上限>] || "未加限定" # 注意这里是一个列表，包含两个整数，或者是一个常量字符串：“未加限定”,
   "北京": <适合北京人的程度>,
   "天津": <适合天津人的程度>,
   ...,
@@ -75,6 +87,7 @@ encoding_prompt = \
   "夏": <适合夏季的程度>,
   "秋": <适合秋季的程度>,
   "冬": <适合冬季的程度>
+  
 }}
 ```
 【待判断的餐食】
@@ -85,6 +98,8 @@ mealservice_desc = '''订餐服务：本接口用于从数据库中匹配最符�
 
 soft_constraints = ["Beijing", "Tianjin", "Hebei", "Shanxi", "Nei Mongol", "Liaoning", "Jilin", "Heilongjiang", "Shanghai", "Jiangsu", "Zhejiang", "Anhui", "Fujian", "Jiangxi", "Shandong", "Henan", "Hubei", "Hunan", "Guangdong", "Guangxi", "Hainan", "Chongqing", "Sichuan", "Guizhou", "Yunnan", "Xizang", "Shanxi2", "Gansu", "Qinghai", "Ningxia", "Xinjiang", "child", "teenager", "adult", "middle-ager", "elderly", "breakfast", "lunch", "dinner", "afternoon-tea", "night-snack", "male", "female", "spring", "summer", "autumn", "winter"]
 
+
+
 class MealService(Tool):
     """
     订餐服务模块，负责获取订餐信息
@@ -92,7 +107,7 @@ class MealService(Tool):
 
     def __init__(self, name="订餐服务", description=mealservice_desc, topK=10):
         super().__init__(name, description)
-        self.items = pd.read_csv('dataset/item.csv')
+        self.items = pd.read_csv(DATASET_ITEM_PATH)
         self.items.set_index(inplace=True, keys=['is_dinner', 'cuisine', 'food_type'])
         self.items['id'] = self.items['city_id'].astype(str) + '_' + self.items['restaurant_id'].astype(str) + '_' + self.items['food_id'].astype(str)
         self.cols = ['is_dinner', 'cuisine', 'food_type']
@@ -100,13 +115,13 @@ class MealService(Tool):
         self.item_names = self.items['food_name'].to_list()
 
     def __call__(self, parameter: dict, user_info: dict, history: list):
-        raw_candidates = self.recommend(user_info, history) # ['酸辣莲藕', '酸辣土豆丝']
+        raw_candidates = self.recommend(user_info, history) #raw_candidates: ['酸辣莲藕', '酸辣土豆丝']
         print(f'候选物品集为：{raw_candidates}')
 
-        retrieved_items = self.retrieve(raw_candidates) # ['土豆丝', '酸辣土豆丝', '炝土豆丝', '西红柿炒鸡蛋', '凉拌紫甘蓝']
+        retrieved_items = self.retrieve(raw_candidates) #retrieved_items ['土豆丝', '酸辣土豆丝', '炝土豆丝', '西红柿炒鸡蛋', '凉拌紫甘蓝']
         print(f'检索结果为：{retrieved_items}')
 
-        judge_result = self.judge(raw_candidates, retrieved_items) # {'酸辣莲藕': None}
+        judge_result = self.judge(raw_candidates, retrieved_items) #judge_result {'酸辣莲藕': None}
         print(f'连接结果为：{judge_result}')
 
         recommended_list = []
@@ -173,19 +188,84 @@ class MealService(Tool):
             result += chunk.choices[0].delta.content
         print(result)
         match = re.search(r'```json\s*(\{.*\})\s*```', result, re.DOTALL)
-        query = json.loads(match.group(1))
-        return query
+        if match:
+            query = json.loads(match.group(1))
+            return query
+        else:
+            raise ValueError("No JSON block found in LLM response.")
 
-    def KNN(self, query: dict):
+    # 示例: encode [烤鸭] -> {...}
+    """result
+    {
+      "饮食类型": 1,
+      "菜系": 0,
+      "中西餐": 1,
+      "不辣": 1,
+      "微辣": 0,
+      "中辣": 0,
+      "特辣": 0,
+      "价格": [100, 500],
+      "北京": 5,
+      "天津": 4,
+      "河北": 4,
+      "山西": 4,
+      "内蒙古": 4,
+      "辽宁": 4,
+      "吉林": 4,
+      "黑龙江": 4,
+      "上海": 4,
+      "江苏": 4,
+      "浙江": 4,
+      "安徽": 4,
+      "福建": 4,
+      "江西": 4,
+      "山东": 4,
+      "河南": 4,
+      "湖北": 4,
+      "湖南": 4,
+      "广东": 4,
+      "广西": 4,
+      "海南": 4,
+      "重庆": 4,
+      "四川": 4,
+      "广州": 4,
+      "云南": 4,
+      "西藏": 4,
+      "陕西": 4,
+      "甘肃": 4,
+      "青海": 4,
+      "宁夏": 4,
+      "新疆": 4,
+      "儿童": 3,
+      "青年": 5,
+      "成年人": 5,
+      "中年人": 5,
+      "老年人": 3,
+      "早餐": 2,
+      "午餐": 3,
+      "晚餐": 5,
+      "下午茶": 2,
+      "夜宵": 2,
+      "男": 5,
+      "女": 5,
+      "春": 4,
+      "夏": 4,
+      "秋": 4,
+      "冬": 4
+    }
+    """
+
+    def KNN(self, query: dict) -> pd.Series:
         for attr in ['饮食类型', '菜系', '中西餐']:
             if query[attr] == 0:
                 query[attr] = slice(None)
-        if query['价格'] != '未加限定':
+        price_range = query.get('价格', '未加限定')
+        if price_range != '未加限定' and isinstance(price_range, list) and len(price_range) == 2:
             filtered_items = self.items[
                 (self.items['price'] >= query['价格'][0]) & (self.items['price'] <= query['价格'][1])]
         else:
             filtered_items = self.items
-        print(filtered_items.shape)
+        print("Filtered items shape:", filtered_items.shape)
         #print(filtered_items)
         indexes = (query['饮食类型'], query['菜系'], query['中西餐'])
         filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])| # To-Improve：怎么编码和匹配辣度更合适？（0, 1, 0, 0匹配出凉粉）
@@ -195,19 +275,29 @@ class MealService(Tool):
         filtered_items = filtered_items.loc[indexes]
         # print(filtered_items.shape)
         # print(filtered_items)
-        vectors = filtered_items[soft_constraints].to_numpy()
+        # vectors = filtered_items[soft_constraints].to_numpy()
+        vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
+        # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
         vector = np.array(list(query.values())[8:]).reshape(1,-1)
         sim = cosine_similarity(vector, vectors)
         top_idx = sim.argmax(axis=1)
         # print(filtered_items)
+        # 输出样例：
+        # city_id                   17
+        # restaurant_id              9
+        # food_id                    7
+        # food_name             野生菌炖土鸡
+        # price                  298.0
+        # ...（省略其它字段）...
+        # id                    17_9_7
+        # Name: (1.0, 1.0, 1.0), dtype: object
         return filtered_items.iloc[top_idx.item()]
 
-
-    def feed_LLM(self, prompt: str) -> str:
+    def feed_LLM(self, prompt: str) -> Iterable:
         """
         根据提示词生成回复
-        :prompt: 输入大模型的提示词
-        :return: 与大模型的连接
+        :param prompt: 输入大模型的提示词
+        :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
         """
         client = OpenAI(
             api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",

@@ -48,3 +48,15 @@ alembic.ini
 /config/*
 !config/loadConfig.py
 db_backups/
+
+# ==============================
+# IDE & 编辑器配置
+# ==============================
+.idea        # JetBrains IDEs
+.vscode/      # Visual Studio Code
+*.sublime-workspace  # Sublime Text 工作区
+/.idea/backend.iml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/misc.xml
+/.idea/vcs.xml
