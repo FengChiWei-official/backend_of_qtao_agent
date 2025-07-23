@@ -1,10 +1,11 @@
-from service.user_info import UserInfo
+
 import requests, re, json
-from service.modules import Tool  # Changed from 'from modules import Tool'
+from src.modules.service.basis.tool import Tool
+from src.modules.service.user_info import UserInfo
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parent.parent.parent
-city_file_path = project_root / 'dataset' / 'citycode.json'
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+city_file_path = project_root / 'dataset' / 'public' / 'citycode.json'
 
 weatherquery_desc = '''天气查询：本接口用于查询天气。接口输入格式：{\"地名\":<用户给出的地名>}'''
 

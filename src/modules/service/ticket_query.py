@@ -1,6 +1,6 @@
 import pandas as pd
-from service.user_info import UserInfo
-from service.modules import Tool
+from src.modules.service.user_info import UserInfo
+from src.modules.service.basis.tool import Tool
 
 ticketquery_desc = '''车票查询：本接口用于从数据库中查询符合用户要求的火车票。接口输入格式：{"起始站":<起始高铁站>, "终点站":<终点高铁站>, "发车日期":<发车日期>, "到站日期":<到站日期>, "最早发车时刻":<最早发车时刻>, "最晚发车时刻":<最晚发车时刻>, "最早到站时刻":<最早到站时刻>, "最晚到站时刻":<最晚到站时刻>}，其中：时刻的格式都应该形如"08:15"、日期的格式都应该形如"2025-6-7"、起始站和终点站不可缺失、用None作缺失值表示不作要求'''
 
@@ -12,8 +12,8 @@ class TicketQuery(Tool):
         super().__init__(name, description)
         # 兼容容器和本地开发环境，始终从项目根目录定位 dataset/ticket.csv
         from pathlib import Path
-        project_root = Path(__file__).resolve().parent.parent.parent
-        ticket_csv_path = project_root / 'dataset' / 'ticket.csv'
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        ticket_csv_path = project_root / 'dataset' / 'ticket_service' / 'ticket.csv'
         self.tickets = pd.read_csv(ticket_csv_path)
         self.tickets.drop('软卧/动卧/一等卧', axis=1, inplace=True)
         self.tickets = self.tickets.groupby(['起始站', '终点站']).apply(lambda X: X)
@@ -96,7 +96,7 @@ class TicketQuery(Tool):
         return matching_stations if matching_stations else None
 
     # 反馈查询失败的原因与相关的数据库细节
-    def __call__(self, parameter: dict, user_info: UserInfo, history: list) -> dict:
+    def __call__(self, parameter: dict, user_info: UserInfo, history: list) -> list:
         """
         查询票务信息
         :param user_info: 用户信息
@@ -221,4 +221,4 @@ if __name__ == '__main__':
     user_info = UserInfo(user_id, ticket_info)
 
     ticket_query = TicketQuery()
-    print(ticket_query({'起始站':'上', '终点站':'乌鲁木齐'}, user_info))
+    print(ticket_query({'起始站':'上', '终点站':'乌鲁木齐'}, user_info, history=[]))

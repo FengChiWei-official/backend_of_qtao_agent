@@ -2,9 +2,9 @@ import pytest
 import pandas as pd
 import numpy as np
 import sys, os
-PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.append(PATH_TO_ROOT)
-from backend.src.modules.service.meal_service import MealService
+from src.modules.service.meal_service import MealService
 
 # 真实服务测试，不使用 mock
 

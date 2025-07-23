@@ -1,7 +1,9 @@
-from dbController.database_controller import DatabaseController
+import os, sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+from src.modules.dbController.db_controller import DatabaseController
 from typing import Dict, Any, Optional
 import logging
-from service.utils import parse_id_card
+from .utils import parse_id_card
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +12,7 @@ class UserInfo:
     用户信息类，用于存储和管理用户的相关信息
     从数据库加载和同步用户状态
     """
-    def __init__(self, user_id: str, ticket_info: Optional[dict] = None, db_controller: Optional[DatabaseController] = None):
+    def __init__(self, user_id: str, ticket_info: Optional[dict] = None):
         """
         初始化用户信息
         
@@ -21,77 +23,13 @@ class UserInfo:
         """
         self.user_id = user_id
         self.ticket_info = ticket_info or {}
-        self._db = db_controller or DatabaseController()
-        self._user_data = None
-        self._load_user_data()
+        self._user_data = self.parse_user_info()[0]
 
-    def _load_user_data(self) -> None:
-        """从数据库加载用户数据"""
-        try:
-            self._user_data = self._db.get_user_by_id(self.user_id)
-            if self._user_data is None:
-                logger.warning(f"用户 {self.user_id} 在数据库中不存在，将使用默认值")
-                self._user_data = self._create_default_user()
-        except Exception as e:
-            logger.error(f"加载用户 {self.user_id} 数据失败: {e}")
-            self._user_data = self._create_default_user()
-
-    def _create_default_user(self) -> Dict[str, Any]:
-        """创建默认用户数据"""
-        try:
-            user_data = {
-                "username": f"user_{self.user_id[:8]}",
-                "email": f"user_{self.user_id[:8]}@example.com",
-                "is_active": True,
-                "preferences": {"theme": "light", "language": "zh-CN"}
-            }
-            user_id = self._db.create_user(user_data)
-            logger.info(f"已为 {self.user_id} 创建默认用户数据")
-            return self._db.get_user_by_id(user_id) or user_data
-        except Exception as e:
-            logger.error(f"创建用户 {self.user_id} 默认数据失败: {e}")
-            return {
-                "id": self.user_id,
-                "username": f"user_{self.user_id[:8]}",
-                "preferences": {}
-            }
-
-    def get_preferences(self) -> Dict[str, Any]:
-        """获取用户偏好设置"""
-        if self._user_data:
-            return self._user_data.get("preferences", {})
-        return {}
-
-    def update_preferences(self, preferences: Dict[str, Any]) -> bool:
-        """更新用户偏好设置"""
-        try:
-            if self._db.update_user_preferences(self.user_id, preferences):
-                if self._user_data:
-                    self._user_data["preferences"] = preferences
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"更新用户 {self.user_id} 偏好设置失败: {e}")
-            return False
-
-    def get_user_info(self) -> Dict[str, Any]:
-        """
-        获取用户信息
-        返回: 用户的相关信息字典
-        """
-        info = {
-            "user_id": self.user_id,
-            "ticket_info": self.ticket_info
-        }
-        if self._user_data:
-            info.update({
-                "username": self._user_data.get("username", ""),
-                "email": self._user_data.get("email", ""),
-                "preferences": self._user_data.get("preferences", {}),
-                "is_active": self._user_data.get("is_active", True)
-            })
-        return info
-
+    def __repr__(self):
+        return f"UserInfo(user_id={self.user_id}, ticket_info={self.ticket_info}, user_data={self._user_data})"
+    def __str__(self):
+        return self.__repr__()
+    
     def parse_user_info(self) -> list:
         """
         解析用户ID信息

@@ -1,14 +1,18 @@
 import pandas as pd
-from openai import OpenAI
 import re, json
 import numpy as np
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from src.modules.service.utils import Tool
 from sklearn.metrics.pairwise import cosine_similarity
 import Levenshtein
 import time
 from typing import Iterable
+
+
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+from src.modules.service.basis.tool import Tool
+from src.modules.service.user_info import UserInfo
+from src.utils.chatgpt import feed_LLM
+
 
 
 
@@ -114,7 +118,7 @@ class MealService(Tool):
         self.topK = topK
         self.item_names = self.items['food_name'].to_list()
 
-    def __call__(self, parameter: dict, user_info: dict, history: list):
+    def __call__(self, parameter: dict, user_info: UserInfo, history: list):
         raw_candidates = self.recommend(user_info, history) #raw_candidates: ['酸辣莲藕', '酸辣土豆丝']
         print(f'候选物品集为：{raw_candidates}')
 
@@ -135,16 +139,19 @@ class MealService(Tool):
         print(f'最终推荐列表为：{recommended_list}')
         return recommended_list
 
-    def recommend(self, user_info: dict, history: list):
+    def recommend(self, user_info: UserInfo, history: list):
         # 使用大模型进行零样本对话式推荐
         prompt = recommend_prompt.format(top_k=3, user_info=user_info, dialogue=history[:-1])
-        completion_generator = self.feed_LLM(prompt)
+        completion_generator = feed_LLM(prompt)
         completion = ''
         for chunk in completion_generator:
             completion += chunk.choices[0].delta.content
         match = re.search(r'\s*(\[.*\])\s*', completion, re.DOTALL)
-        raw_candidates = eval(match.group(1))
-        return raw_candidates
+        if match:
+            raw_candidates = eval(match.group(1))
+            return raw_candidates
+        else:
+            raise ValueError("No list block found in LLM response.")
 
     def retrieve(self, raw_candidates: list):
         retrieved_items = []
@@ -165,7 +172,7 @@ class MealService(Tool):
     def judge(self, raw_candidates: list, retrieved_items: list):
         # 将LLM生成的原始候选物品与实际存在物品进行链接
         prompt = judge_prompt.format(raw_candidates=raw_candidates, retrieved_items=[item['food_name'] for item in retrieved_items])
-        completion_generator = self.feed_LLM(prompt)
+        completion_generator = feed_LLM(prompt)
         completion = ''
         for chunk in completion_generator:
             completion += chunk.choices[0].delta.content
@@ -181,7 +188,7 @@ class MealService(Tool):
 
     def encode(self, raw_candidates: list):
         prompt = encoding_prompt.format(items=raw_candidates)
-        completion = self.feed_LLM(prompt)
+        completion = feed_LLM(prompt)
         result = ''
         for chunk in completion:
             #print(chunk.choices[0].delta.content)
@@ -293,25 +300,7 @@ class MealService(Tool):
         # Name: (1.0, 1.0, 1.0), dtype: object
         return filtered_items.iloc[top_idx.item()]
 
-    def feed_LLM(self, prompt: str) -> Iterable:
-        """
-        根据提示词生成回复
-        :param prompt: 输入大模型的提示词
-        :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
-        """
-        client = OpenAI(
-            api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        )
-        messages = [{'role': 'user', 'content': prompt}]
-        completion = client.chat.completions.create(
-            model="qwen-max",
-            messages=messages,
-            stop="Observation",
-            stream=True,
-            stream_options={"include_usage": False}
-        )
-        return completion
+    
 
 
 if __name__ == "__main__":
@@ -324,32 +313,3 @@ if __name__ == "__main__":
     meal_service({}, user_info, history)
     end = time.time()
     print(f'耗时：{end-start}')
-
-
-'''    def encode(self, parameter: dict, user_info: dict, history: list) -> str:
-        prompt = encoding_prompt.format(user_info=user_info, context=history[:-1])
-        completion = self.feed_LLM(prompt)
-        result = ''
-        for chunk in completion:
-            result += chunk.choices[0].delta.content
-        match = re.search(r'```json\s*(\{.*\})\s*```', result, re.DOTALL)
-        query = json.loads(match.group(1))
-        print(query)
-        for attr in ['饮食类型', '菜系', '中西餐']:
-            if query[attr] == 0:
-                query[attr] = slice(None)
-        if query['价格'] != '未加限定':
-            filtered_items = self.items[(self.items['price']>=query['价格'][0]) & (self.items['price']<=query['价格'][1])]
-        else:
-            filtered_items = self.items
-        indexes = (query['饮食类型'], query['菜系'], query['中西餐'], query['不辣'], query['微辣'], query['中辣'], query['特辣'])
-        filtered_items = filtered_items.loc[indexes]
-        index = faiss.IndexFlatL2(len(soft_constraints))
-        vectors = filtered_items[soft_constraints].to_numpy()
-        index.add(vectors)
-        query_vector = np.array(list(query.values())[8:]).reshape(1,-1)
-        print(query_vector.shape, vectors.shape)
-        distances, indices = index.search(query_vector, 5)
-        ranked_items = filtered_items.iloc[indices[0]]
-
-        return self.items[self.items['id'].isin(ranked_items['id'].to_list())]['food_name'].to_list()'''

@@ -1,10 +1,9 @@
 # utils.py
+import os, sys
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent.parent.parent
 
-class Tool():
-    def __init__(self, name, description):
-        self.name = name
-        self.description = description
-
+json_path = project_root / 'dataset' / 'public' / 'citycode.json'
 
 def format_ticket_info(ticket_info: dict) -> str:
     """
@@ -34,15 +33,11 @@ def get_city_code_map():
     global city_code_data
     if city_code_data is None:
         try:
-            # 兼容容器和本地开发环境，始终从项目根目录定位 dataset/citycode.json
-            # backend/src/service/utils.py -> backend/dataset/citycode.json
-            project_root = Path(__file__).resolve().parent.parent.parent
-            json_path = project_root / 'dataset' / 'citycode.json'
             with open(json_path, 'r', encoding='utf-8') as f:
                 city_code_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading citycode.json: {e}")
-            city_code_data = {}
+            raise
     return city_code_data
 
 def get_address_from_code(code: str) -> dict:
