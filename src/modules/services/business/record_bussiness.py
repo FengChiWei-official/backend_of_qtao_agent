@@ -1,5 +1,5 @@
 from src.modules.dbController.dao.dialogue_record_dao import DialogueRecordDAO
-from src.modules.dbController.dataModels import DialogueRecord
+from src.modules.dbController.models.record import DialogueRecord
 from src.modules.services.dto.dto import DialogueRecordDTO
 import uuid
 from typing import List

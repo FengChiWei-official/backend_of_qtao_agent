@@ -78,7 +78,7 @@ class TestDataBaseSession(unittest.TestCase):
         # 测试自动表重建功能
         with self.db_session.get_session() as session:
             # 假设有一个User模型，检查是否存在
-            from src.modules.dbController.dataModels import User
+            from src.modules.dbController.models.user import User
             user_table_exists = session.query(User).first() is not None
             self.assertTrue(user_table_exists, "User table should exist after initialization with table regeneration.")
 

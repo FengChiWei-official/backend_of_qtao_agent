@@ -1,7 +1,6 @@
 from src.modules.dbController.dao.user_dao import UserDAO
-from src.modules.dbController.dataModels import User
+from src.modules.dbController.models.user import User
 from src.modules.services.dto.dto import UserDTO
-import uuid
 import hashlib
 
 class UserBusiness:

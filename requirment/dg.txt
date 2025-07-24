@@ -1,2 +1,0 @@
-faiss-cpu==1.7.4
-python-Levenshtein==0.23.0

@@ -3,7 +3,9 @@ import logging
 logger = logging.getLogger(__name__)
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, PATH_TO_ROOT)
-from src.modules.dbController.dataModels import User, Conversation, DialogueRecord
+from src.modules.dbController.models.record import DialogueRecord
+from src.modules.dbController.models.conversation import Conversation
+from src.modules.dbController.models.user import User
 from src.modules.dbController.db_controller import DatabaseController
 
 from config.loadConfig import ConfigLoader

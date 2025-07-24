@@ -1,5 +1,7 @@
 import logging
-from src.modules.dbController.dataModels import User, Conversation, DialogueRecord
+from src.modules.dbController.models.record import DialogueRecord
+from src.modules.dbController.models.conversation import Conversation
+from src.modules.dbController.models.user import User
 from src.modules.dbController.basis.dbSession import DatabaseSessionManager
 from typing import List
 from sqlalchemy.exc import IntegrityError

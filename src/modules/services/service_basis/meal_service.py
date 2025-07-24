@@ -1,5 +1,5 @@
 from .utils import PATH_TO_ROOT
-import sys, os
+import sys
 if str(PATH_TO_ROOT) not in sys.path:
     sys.path.append(str(PATH_TO_ROOT))
 # 路径常量集中管理
@@ -11,9 +11,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import Levenshtein
 import time
-from typing import Iterable
-
-
 
 from src.modules.services.service_basis.basis.tool import Tool
 from src.modules.services.service_basis.user_info import UserInfo

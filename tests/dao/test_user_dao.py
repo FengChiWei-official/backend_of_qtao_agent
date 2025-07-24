@@ -1,7 +1,7 @@
 import unittest
 import os
 import copy  # 添加深拷贝支持
-from src.modules.dbController.dataModels import User
+from src.modules.dbController.models.user import User
 from src.modules.dbController.basis.dbSession import DatabaseSessionManager as DM
 from src.modules.dbController.dao.user_dao import UserDAO
 from config.loadConfig import ConfigLoader

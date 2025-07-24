@@ -1,7 +1,6 @@
 from src.modules.dbController.dao.conversation_dao import ConversationDAO
-from src.modules.dbController.dataModels import Conversation
+from src.modules.dbController.models.conversation import Conversation
 from src.modules.services.dto.dto import ConversationDTO
-import uuid
 from typing import List
 
 class ConversationBusiness:
