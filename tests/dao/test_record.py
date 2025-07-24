@@ -5,9 +5,9 @@ logger = logging.getLogger(__name__)
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, PATH_TO_ROOT)
 from src.modules.dbController.dataModels import User, Conversation, DialogueRecord
-from src.modules.dao.user_dao import UserDAO
-from src.modules.dao.conversation_dao import ConversationDAO
-from src.modules.dao.dialogue_record_dao import DialogueRecordDAO
+from src.modules.dbController.dao.user_dao import UserDAO
+from src.modules.dbController.dao.conversation_dao import ConversationDAO
+from src.modules.dbController.dao.dialogue_record_dao import DialogueRecordDAO
 from src.modules.dbController.basis.dbSession import DatabaseSessionManager as DM
 
 from config.loadConfig import ConfigLoader

@@ -1,9 +1,20 @@
 import sys
+import json
 from .utils import PATH_TO_ROOT
 if str(PATH_TO_ROOT) not in sys.path:
     sys.path.append(str(PATH_TO_ROOT))
 
+from .utils import Looper
+
 from src.modules.services.service_basis.user_info import UserInfo  # Adjust the import path as needed
+from src.modules.services.dto.dto import DialogueRecordDTO
+from ..business.record_bussiness import DialogueRecordBusiness
+
+
+import re
+import datetime
+
+
 
 # Define the State class to manage user state
 class State:
@@ -18,54 +29,283 @@ class State:
     """
     `dialogue history` is 3 layers:
     - `history`: List of finished conversation records, each mapping to a DialogueRecord row.
-    - `context`: List of recent or relevant context records (e.g. last N rounds, or unfinished qtaos).
-    - `qta`: Current QTA (question-task-action) state, typically the latest user query or unfinished interaction.
+    - `context`: List of recent or relevant context records (e.g. last N rounds, or unfinished thought_actionos).
+    - `thought_action`: Current thought_action (question-task-action) state, typically the latest user query or unfinished interaction.
     """
     """
     Example structure based on DialogueRecord table:
-    {
-        "history": [
-            {
-                "id": "a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                "conversation_id": "c1d2e3f4-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                "user_id": "u1v2w3x4-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                "user_query": "What is the weather like in Beijing?",
-                "system_response": "The weather in Beijing is sunny with a high of 30°C.",
-                "system_thoughts": "Thought: Check the weather service for current conditions.\nAction: query_weather\nAction Input: {\"city\": \"Beijing\"}\nObservation: The weather in Beijing is sunny with a high of 30°C.\nThought: Provide the weather information to the user.\nFinal Answer: The weather in Beijing is sunny with a high of 30°C.",
-                "image_list": [
-                    "https://example.com/image1.jpg",
-                    "https://example.com/image2.jpg"
-                ],
-                "is_removed": False,
-                "query_sent_at": "2025-07-23T10:00:00+00:00",
-                "response_received_at": "2025-07-23T10:00:01+00:00",
-                "created_at": "2025-07-23T10:00:01+00:00"
-            },
-            # ... more records ...
-        ],
-        "context": [
-            # Typically recent or relevant records, same structure as history
-        ],
-        "qta": {
-            # Current QTA, can be a partial DialogueRecord or a dict like:
-            "role": "user",
-            "content": "What is the weather like in Beijing?",
-            "deep_thinking": {
-                "Thought": "What is the weather like in Beijing?",
-                "Action": "query_weather",
-                "Action Input": {"city": "Beijing"},
-                "Observation": None
-            }
-        }
-    }
+    history is a list of DialogueRecordDTO objects, each containing:
+    - id: str
+    - conversation_id: str
+    - user_id: str
+    - user_query: str
+    - system_response: str
+    - system_thoughts: str | None
+    - image_list: list[str] | None
+    - query_sent_at: str | None
+    - response_received_at: str | None
+    - created_at: str | None    
+
+    history also can be a list of dicts in openai format:
+    [   
+        {"role": "user", "content": "用户说的话"},
+        {"role": "assistant", "content": "助手回复", "system_thoughts": "...", "images": [...]}
+    ]   
+
+    context is a list of dict objects, for making dao to save to database:
+    
+
     """
-    def __init__(self, user_id: str, conversation_id:str, dependency_db_controller:None):
+    def __init__(self, user_id: str, conversation_id:str, 
+                 record_bussiness: DialogueRecordBusiness, 
+                 prompt_template: str,
+                 tools_description: str,
+                 tools_names: list[str],
+                 patient: int = 3):
         self.__user_id = user_id
         self.__user_info = UserInfo(user_id)
         self.__conversation_id = conversation_id
 
-        self.__dependency_db_controller = None
-        self.__history = self.__load_history()
+        self.__dependency_record_bussiness = record_bussiness
 
-    def __load_history(self):
-        return self.__dependency_db_controller.get_records_by_conversation_id(self.__conversation_id)
+        self.__is_new_context_available = True
+        self.looper = Looper(patient)
+        self.__loop_count = 0
+        self.__loop_break = False
+
+        self.__query = ""
+        self.__prompt_template = prompt_template
+        self.__tools_description = tools_description
+        self.__tools_names = tools_names
+
+        self.__context: list[dict] = [] # a list of thought_action_observations, each mapping to a DialogueRecord row.
+        self.__thought_action: dict = {}
+        self.__final_answer = {}
+
+
+
+    @property
+    def __load_history_DTO(self):
+        return self.__dependency_record_bussiness.list_records_by_conversation(self.__conversation_id, last_n=10)
+
+    def __load_history(self) -> list[dict]:
+        """
+        加载对话历史记录
+        :return: 对话历史记录列表
+        """
+        history = self.__load_history_DTO
+        if not history:
+            return []
+        
+        # 将DTO转换为字典列表
+        return [msg    for record in history    for msg in record.to_json()]
+
+    def __push_to_history(self):
+        """
+        将当前对话上下文推送到历史记录中
+        """
+        self.__dependency_record_bussiness.create_record(
+            conversation_id=self.__conversation_id,
+            user_id=self.__user_id,
+            user_query=self.__query,
+            system_response=self.__final_answer.get("answer", ""),
+            system_thoughts=json.dumps(self.__context),
+            image_list=self.__final_answer.get("picture", []),
+        )
+        raise NotImplementedError("This method should be implemented in subclasses.")
+    
+    def __start_context(self):
+        """
+        初始化对话上下文
+        """
+        raise NotImplementedError("This method should be implemented in subclasses.")
+
+    def __push_to_context(self):
+        """
+        设置对话上下文
+        """
+        self.__context.append(self.__thought_action)
+    
+    def __close_context(self):
+        """
+        关闭对话上下文
+        """
+
+        self.__context.append({"thought": self.__final_answer.get("thought", "")})
+
+    def __start_thought_action_parse_text_and_save(self, raw_thought_action: str):
+        """
+        初始化thought_action状态
+        :param thought_action: thought_action状态字典
+        """
+        # 提取 Thought
+        thought_match = re.search(r"Thought:\s*(.*?)\s*Action:", raw_thought_action, re.DOTALL)
+        thought = thought_match.group(1).strip() if thought_match else ""
+
+        # 提取 Action
+        action_match = re.search(r"Action:\s*(.*?)\s*Action Input:", raw_thought_action, re.DOTALL)
+        action = action_match.group(1).strip() if action_match else ""
+
+        # 提取 Action Input
+        input_match = re.search(r"Action Input:\s*(.*)", raw_thought_action, re.DOTALL)
+        action_input = input_match.group(1).strip() if input_match else ""
+        try: 
+            action_input = json.loads(action_input)
+        except json.JSONDecodeError:
+            raise ValueError(f"无法解析Action Input: {action_input}")
+
+        self.__thought_action = {
+            "thought": thought,
+            "action": action,
+            "action_input": action_input,
+            "observation": "",
+            "raw": raw_thought_action
+        }
+    
+    def __close_thought_action(self, observation: str):
+        """
+        关闭thought_action状态, push到context
+        """
+        self.__thought_action["observation"] = observation
+        self.__thought_action["raw"] = self.__thought_action["raw"] + "\nObservation: " + observation
+
+    def __set_final_answer(self, raw_final_answer: str):
+        """
+        设置最终答案
+        :param final_answer: 最终答案字符串
+        """
+  
+        # 提取 Thought
+        thought_match = re.search(r"Thought:\s*(.*?)\s*Final Answer:", raw_final_answer, re.DOTALL)
+        thought = thought_match.group(1).strip() if thought_match else ""
+
+        # 提取 Final Answer JSON
+        answer_str = raw_final_answer.split("Final Answer:")[-1].strip()
+        try:
+            parsed_answer = json.loads(answer_str)
+            answer = parsed_answer.get("answer", "对不起，我无法提供有效的回答。")
+            picture = parsed_answer.get("picture", [])
+        except json.JSONDecodeError as e:
+            raise ValueError(f"无法解析最终答案: {e}")
+
+        self.__final_answer = {
+            "thought": thought,
+            "answer": answer,
+            "picture": picture
+        }
+
+    def _is_containning_final_answer(self, raw_actions_or_answer) -> bool:
+        """
+        检查是否处于完成状态
+        :return: True if the state is finishing, False otherwise
+        """
+        if "Final Answer" in raw_actions_or_answer:
+            return True
+
+        try:
+            # 尝试解析为 JSON
+            json.loads(raw_actions_or_answer)
+            return True
+        except json.JSONDecodeError:
+            # 如果解析失败，则不是完成状态
+            return False
+
+    def _start_context(self, query: str):
+        """
+        启动对话上下文
+        """
+        self.__query = query
+    
+    def _start_thought_action(self, raw_thought_action: str):
+        """
+        启动thought_action状态
+        :param raw_thought_action: 原始thought_action状态字符串
+        """
+        self.__start_thought_action_parse_text_and_save(raw_thought_action)
+    
+    def _close_thought_action_and_push_context(self, observation: str):
+        """
+        关闭thought_action状态并将其推送到上下文
+        """
+        self.__close_thought_action(observation)
+        self.__push_to_context()
+
+    def _set_final_answer_close_context_and_push_history(self, raw_final_answer: str):
+        """
+        设置最终答案，关闭上下文并将其推送到历史记录
+        :param final_answer: 最终答案字符串
+        """
+
+        self.__set_final_answer(raw_final_answer)
+        self.__close_context()
+        self.__push_to_history()
+    
+    def handle_user_query(self, user_query: str):
+        """
+        处理用户查询, 有时候会是用户的追答
+        :param user_query: 用户查询字符串
+        """
+        self._start_context(query=user_query)
+        self.looper.reset()
+
+
+    def handle_llm_response(self, response: str):
+        """
+        处理LLM的响应, 要不然start—thought_action， 要不然close-context
+        :param response: LLM的响应字符串
+        """
+        if self._is_containning_final_answer(response):
+            self._set_final_answer_close_context_and_push_history(response)
+            self.looper.break_loop()
+        else:  
+            # thought_action 的原始状态不关注，直接覆盖
+            self._start_thought_action(response)
+    
+    def handle_observation(self, observation: str):
+        """
+        处理观察结果
+        :param observation: 观察结果字符串
+        """
+        self._close_thought_action_and_push_context(observation)
+    
+    def generate_query_for_llm(self) -> list:
+        """
+        生成查询字符串以供LLM使用
+        :return: 查询字符串
+        """
+        history = self.__load_history()
+        contexts = [idx["raw"] for idx in self.__context]
+        new_message = {
+            "role": "user",
+            "content": self._load_prompt_template() + self.__query + "\n".join(contexts)
+        }
+        history.append(new_message)
+        return history
+
+    def generate_final_answer(self) -> dict:
+        """
+        生成最终答案
+        :return: 最终答案字符串
+        """
+        return self.__final_answer
+    
+    def generate_action_input_for_tools(self) -> tuple[str, dict]:
+        """
+        生成工具的输入参数
+        :return: 工具输入参数字典
+        """
+        return (
+            self.__thought_action.get("action", ""),
+            self.__thought_action.get("action_input", {})
+        )
+    
+    def _load_prompt_template(self) -> str:
+        """
+        加载提示模板
+        :return: 提示模板字符串
+        """
+        return self.__prompt_template.format(
+            tools_description=self.__tools_description,
+            date=str(datetime.datetime.now()),  # Example of adding a timestamp
+            tools_names=", ".join(self.__tools_names)  # Example of adding tool names
+        )

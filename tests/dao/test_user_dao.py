@@ -1,11 +1,9 @@
 import unittest
 import os
-import sys
 import copy  # 添加深拷贝支持
-from datetime import datetime
-from src.modules.dbController.dataModels import User, Conversation, DialogueRecord
+from src.modules.dbController.dataModels import User
 from src.modules.dbController.basis.dbSession import DatabaseSessionManager as DM
-from src.modules.dao.user_dao import UserDAO
+from src.modules.dbController.dao.user_dao import UserDAO
 from config.loadConfig import ConfigLoader
 
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))

@@ -144,7 +144,7 @@ class DialogueRecordDAO:
                 logger.error(f"Error deleting Dialogue Record: {e}")
                 raise
 
-    def get_records_by_conversation_id(self, conversation_id: str) -> List[DialogueRecord]:
+    def get_records_by_conversation_id(self, conversation_id: str, last_n: int | None = None) -> List[DialogueRecord]:
         """
         获取指定会话的所有对话记录
         :param conversation_id: 会话ID
@@ -152,9 +152,11 @@ class DialogueRecordDAO:
         :raises LookupError: 如果没有找到对话记录
         """
         with self.__db_session_manager.get_session() as session:
-            records = session.query(DialogueRecord).filter(DialogueRecord.conversation_id == conversation_id).all()
-            filtered_records = [record for record in records if not record.is_removed]
-            if not filtered_records:
+            reversed_records = session.query(DialogueRecord).filter(DialogueRecord.conversation_id == conversation_id, DialogueRecord.is_removed == False).order_by(DialogueRecord.created_at.desc()).all()
+            if last_n is not None:
+                reversed_records = reversed_records[:last_n]
+            ordered_dialogue_records = reversed_records[::-1]  # Reverse to maintain chronological order
+            if not ordered_dialogue_records:
                 logger.warning(f"No dialogue records found for conversation ID: {conversation_id}")
                 raise LookupError(f"No dialogue records found for conversation ID {conversation_id}.")
-            return filtered_records
+            return ordered_dialogue_records

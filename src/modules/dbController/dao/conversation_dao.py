@@ -54,7 +54,7 @@ class ConversationDAO:
                 raise AttributeError("Conversation ID is not set after creation.")
             return conversation
 
-    def get_conversation_by_id(self, conversation_id: str) -> Optional[Conversation]:
+    def get_conversation_by_id(self, conversation_id: str) -> Conversation:
         """
         获取会话
         :param conversation_id: 会话ID
@@ -76,6 +76,23 @@ class ConversationDAO:
                 logger.warning(f"User not found or soft-deleted for conversation ID: {conversation_id}")
                 raise ValueError(f"User for conversation {conversation_id} does not exist or has been soft-deleted.")
             return conversation
+
+    def get_conversations_by_user_id(self, user_id: str) -> list[Conversation]:
+        """
+        获取用户的所有会话
+        :param user_id: 用户ID
+        :return: Conversation对象列表
+        :raises LookupError: 如果用户不存在
+        :raises ValueError: 如果用户已被软删除
+        """
+        with self.__db_session_manager.get_session() as session:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                raise LookupError(f"User with ID {user_id} not found.")
+            if user.is_removed:
+                raise ValueError(f"User with ID {user_id} has been soft-deleted.")
+            conversations = session.query(Conversation).filter(Conversation.user_id == user_id, Conversation.is_removed == False).all()
+            return conversations
 
     def update_conversation(self, conversation: Conversation) -> Conversation:
         """

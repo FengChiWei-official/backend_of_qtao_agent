@@ -1,6 +1,26 @@
 from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam
-from typing import Iterable
+from typing import Iterable, Callable, Any
+
+def feed_LLM_full(history: list) -> Iterable:
+    """
+    根据历史记录生成回复
+    :param history: 历史记录列表
+    :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
+    """
+    client = OpenAI(
+        api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+    )
+    messages = [ChatCompletionUserMessageParam(role=msg.role, content=msg.content) for msg in history]
+    completion = client.chat.completions.create(
+        model="qwen-max",
+        messages=messages,
+        stop="Observation",
+        stream=True,
+        stream_options={"include_usage": False}
+    )
+    return completion
 
 def feed_LLM(prompt: str) -> Iterable:
         """
@@ -23,13 +43,14 @@ def feed_LLM(prompt: str) -> Iterable:
         return completion
 
 
-def feed_and_gether_LLM(prompt: str) -> str:
+def gather_llm_output(fn):
     """
-    根据提示词生成回复，并将所有流式响应块合并为一个字符串
-    :return: 返回一个字符串，包含所有流式响应块的内容
+    装饰器：将返回的流式 LLM 响应聚合为字符串
     """
-    completion_generator = feed_LLM(prompt)
-    completion = ''
-    for chunk in completion_generator:
-        completion += chunk.choices[0].delta.content
-    return completion
+    def wrapper(*args, **kwargs):
+        completion = ''
+        for chunk in fn(*args, **kwargs):
+            completion += chunk.choices[0].delta.content
+        return completion
+    return wrapper
+
