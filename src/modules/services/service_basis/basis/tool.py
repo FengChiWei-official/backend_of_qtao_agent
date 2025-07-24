@@ -1,4 +1,4 @@
-from src.modules.service.user_info import UserInfo
+from src.modules.service_basis.user_info import UserInfo
 from abc import ABC, abstractmethod
 
 class Tool(ABC):

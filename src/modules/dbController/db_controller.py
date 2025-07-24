@@ -8,6 +8,7 @@ from src.modules.dbController.dataModels import User, Conversation, DialogueReco
 
 from typing import Optional, Dict, Any
 from contextlib import contextmanager
+from sqlalchemy.exc import IntegrityError
 
 # Import DataBaseSession from its module
 
@@ -21,12 +22,12 @@ class DatabaseController:
     Database Controller for managing database sessions and operations.
     """
 
-    def __init__(self, config: Dict[str, Any], is_regenerating_table: bool) -> None:
+    def __init__(self, config: Dict[str, Any]) -> None:
         """
         Initialize the DatabaseController with configuration and table regeneration flag.
         """
         logger.info("Initializing DatabaseController...")
-        self.__db_session_manager = DataBaseSession(config, is_regenerating_table)
+        self.__db_session_manager = DataBaseSession(config)
 
     """
     user management methods
@@ -44,7 +45,7 @@ class DatabaseController:
             Exception: If there is an error during user creation.
         """
         try:
-            existed = self.get_a_user_by_id(user.id)
+            existed = self.get_user_by_id(user.id)
             if existed:
                 raise RuntimeError(f"User with ID {user.id} already exists.")
         
@@ -64,11 +65,15 @@ class DatabaseController:
             logger.error(f"Error creating user: {e}")
             raise Exception(f"Error creating user: {e}")
         
-        with self.__db_session_manager.get_session() as session:
-                session.add(user)
-                session.commit()
-                logger.info(f"User created successfully: {user}")
-        return self.get_a_user_by_id(user.id)
+        try:
+            with self.__db_session_manager.get_session() as session:
+                    session.add(user)
+                    session.commit()
+                    logger.info(f"User created successfully: {user}")
+        except IntegrityError as e:
+            logger.error(f"Error creating user: {e}")
+            raise AttributeError(f"User with username {user.username} or ID {user.id} already exists.") from e
+        return user
         
 
     def update_user(self, user: User) -> User:
@@ -156,7 +161,7 @@ class DatabaseController:
                 session.rollback()
                 raise
 
-    def get_a_user_by_id(self, user_id: str) -> User:
+    def get_user_by_id(self, user_id: str) -> User:
         """
         Retrieve a user by their ID.
         Args:
@@ -266,14 +271,18 @@ class DatabaseController:
             Conversation: The created conversation object.
         raises:
             LookupError: If a conversation with the same ID already exists.
+            AttributeError: if a conversation missing user_id or user_id does not exist.
+            ValueError: If the conversation ID cannot be automatically generated.
             Exception: If there is an error during conversation creation.
         """
         with self.__db_session_manager.get_session() as session:
             try:
                 # Check if user exists before creating conversation
+                if not conversation.user_id:
+                    raise AttributeError("Conversation must have a user_id.")
                 user_exists = session.query(User).filter(User.id == conversation.user_id).first()
                 if not user_exists:
-                    raise ValueError(f"User with ID {conversation.user_id} does not exist. Cannot create conversation.")
+                    raise AttributeError(f"User with ID {conversation.user_id} does not exist. Cannot create conversation.")
                 if conversation.id is not None:
                     existing_conversation = session.query(Conversation).filter(Conversation.id == conversation.id).first()
                     if existing_conversation:
@@ -282,7 +291,7 @@ class DatabaseController:
                 session.commit()
                 logger.info(f"Conversation created successfully: {conversation}")
                 if conversation.id is None:
-                    raise ValueError("Conversation ID cannot be automatically generated.")
+                    raise ValueError("We tried to create a conversation without an ID, which is not allowed.")
                 return conversation
                 
             
@@ -290,7 +299,10 @@ class DatabaseController:
                 logger.error(f"Conversation creation failed: {e}")
                 session.rollback()
                 raise
-            
+            except IntegrityError as e:
+                logger.error(f"Error creating conversation: {e}")
+                session.rollback()
+                raise AttributeError(f"Conversation with session name {conversation.session_name} already exists.") from e
             except Exception as e:
                 logger.error(f"Error creating conversation: {e}")
                 session.rollback()

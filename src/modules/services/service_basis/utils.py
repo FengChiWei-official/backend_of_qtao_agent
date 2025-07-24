@@ -1,9 +1,20 @@
-# utils.py
-import os, sys
+from os import path
 from pathlib import Path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
+from functools import lru_cache
 
-json_path = project_root / 'dataset' / 'public' / 'citycode.json'
+@lru_cache(maxsize=1)
+def get_root_path() -> Path:
+    for i in range(10):
+        t = Path(__file__).resolve().parents[i]
+        if t.name == 'backend':
+            return t
+    raise FileNotFoundError("Project root not found in the expected directory structure.")
+
+PATH_TO_ROOT = get_root_path()
+
+
+
+json_path = PATH_TO_ROOT / 'dataset' / 'public' / 'citycode.json'
 
 def format_ticket_info(ticket_info: dict) -> str:
     """

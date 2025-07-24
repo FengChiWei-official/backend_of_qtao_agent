@@ -1,7 +1,11 @@
 import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-from src.modules.dbController.db_controller import DatabaseController
-from typing import Dict, Any, Optional
+
+from .utils import PATH_TO_ROOT
+if str(PATH_TO_ROOT) not in sys.path:
+    sys.path.append(str(PATH_TO_ROOT))
+
+DATASET_ITEM_PATH = PATH_TO_ROOT / 'dataset' / 'meal_service' / 'item.csv'
+from typing import Optional
 import logging
 from .utils import parse_id_card
 

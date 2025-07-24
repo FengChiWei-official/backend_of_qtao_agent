@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from src.modules.service.weather_query import WeatherQuery
-from src.modules.service.user_info import UserInfo
+from src.modules.services.service_basis.weather_query import WeatherQuery
+from src.modules.services.service_basis.user_info import UserInfo
 import json
 from pathlib import Path
 
 class TestWeatherQuery(unittest.TestCase):
-    @patch('src.modules.service.weather_query.open')
-    @patch('src.modules.service.weather_query.json.load')
+    @patch('src.modules.services.service_basis.weather_query.open')
+    @patch('src.modules.services.service_basis.weather_query.json.load')
     def setUp(self, mock_json_load, mock_open):
         # mock city data
         mock_json_load.return_value = {
@@ -20,10 +20,10 @@ class TestWeatherQuery(unittest.TestCase):
             }
         }
         self.weather_query = WeatherQuery()
-        self.user_info = UserInfo(user_id=1, ticket_info={})
+        self.user_info = UserInfo(user_id="1", ticket_info={})
         self.history = []
 
-    @patch('src.modules.service.weather_query.requests.get')
+    @patch('src.modules.services.service_basis.weather_query.requests.get')
     def test_query_weather_success(self, mock_get):
         # mock response
         mock_response = MagicMock()

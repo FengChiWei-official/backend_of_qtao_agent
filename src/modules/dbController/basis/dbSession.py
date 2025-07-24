@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 class DataBaseSession:
 
-    def __init__(self, config: Dict[str, Any], is_regenerating_table: bool) -> None:
+    # def __init__(self, config: Dict[str, Any], is_regenerating_table: bool) -> None:
+    def __init__(self, config: Dict[str, Any]):
         """
         Initialize the database connection.
         Args:
@@ -93,6 +94,7 @@ class DataBaseSession:
             raise
         
 
+        """
         self.__is_regenerating_table = is_regenerating_table
         if self.__is_regenerating_table:
             logger.info("Regenerating database tables...")
@@ -102,7 +104,7 @@ class DataBaseSession:
             # 重新生成表
             Base.metadata.create_all(self.__engine)
             logger.info("Database tables regenerated successfully.")
-
+        """
         logger.info("Database connection initialized successfully.")
 
     def __get_db_url(self) -> str:
@@ -157,3 +159,31 @@ class DataBaseSession:
             """
             logger.info("Closing database session...")
             session.close()
+
+class DatabaseSessionManager:
+    """
+    DataBaseSession 单例管理器
+    提供统一的数据库会话管理入口
+    """
+    _instance = None
+    _config: Dict[str, Any] | None = None  # Add this line to define the attribute
+    _db_session: DataBaseSession | None = None  # Add this line to define the attribute
+
+    def __new__(cls, db_config: Dict[str, Any]) -> 'DatabaseSessionManager':
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._config = db_config
+            cls._instance._db_session = DataBaseSession(cls._instance._config)
+        return cls._instance
+
+    def get_session(self):
+        """
+        获取新的数据库会话（推荐用 with 管理生命周期）
+        """
+        if self._db_session is None:
+            if self._config is None:
+                raise ValueError("DatabaseSessionManager not initialized with config.")
+            self._db_session = DataBaseSession(self._config)
+        return self._db_session.get_session()
+
+

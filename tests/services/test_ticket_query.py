@@ -2,8 +2,8 @@ import pytest
 import os, sys
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 sys.path.append(PATH_TO_ROOT)
-from src.modules.service.ticket_query import TicketQuery
-from src.modules.service.user_info import UserInfo
+from src.modules.services.service_basis.ticket_query import TicketQuery
+from src.modules.services.service_basis.user_info import UserInfo
 
 @pytest.fixture
 def user_info():

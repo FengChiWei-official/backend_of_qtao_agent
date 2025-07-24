@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
-from src.modules.service.language_model import LanguageModel
+
+from src.modules.services.service_basis.language_model import LanguageModel
 import asyncio
 
 class TestLanguageModel(unittest.TestCase):
-    @patch('src.modules.service.language_model.requests.post')
+    @patch('src.modules.services.service_basis.language_model.requests.post')
     def test_generate_response(self, mock_post):
         # mock response
         mock_response = MagicMock()
@@ -19,7 +20,7 @@ class TestLanguageModel(unittest.TestCase):
         result = lm.generate_response('你好')
         self.assertEqual(result, '你好，世界！')
 
-    @patch('src.modules.service.language_model.aiohttp.ClientSession')
+    @patch('src.modules.services.service_basis.language_model.aiohttp.ClientSession')
     def test_generate_response_async(self, mock_session_cls):
         # mock aiohttp response
         mock_response = AsyncMock()
@@ -43,7 +44,7 @@ class TestLanguageModel(unittest.TestCase):
         result = loop.run_until_complete(lm.generate_response_async('async test'))
         self.assertEqual(result, '异步回复')
 
-    @patch('src.modules.service.language_model.aiohttp.ClientSession')
+    @patch('src.modules.services.service_basis.language_model.aiohttp.ClientSession')
     def test_async_concurrent(self, mock_session_cls):
         # mock aiohttp response
         mock_response = AsyncMock()

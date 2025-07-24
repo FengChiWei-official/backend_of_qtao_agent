@@ -1,11 +1,13 @@
+import os, sys
 
+from .utils import PATH_TO_ROOT
+if str(PATH_TO_ROOT) not in sys.path:
+    sys.path.append(str(PATH_TO_ROOT))
 import requests, re, json
-from src.modules.service.basis.tool import Tool
-from src.modules.service.user_info import UserInfo
-from pathlib import Path
+from src.modules.services.service_basis.basis.tool import Tool
+from src.modules.services.service_basis.user_info import UserInfo
 
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-city_file_path = project_root / 'dataset' / 'public' / 'citycode.json'
+city_file_path = PATH_TO_ROOT / 'dataset' / 'public' / 'citycode.json'
 
 weatherquery_desc = '''天气查询：本接口用于查询天气。接口输入格式：{\"地名\":<用户给出的地名>}'''
 
@@ -62,7 +64,7 @@ class WeatherQuery(Tool):
 if __name__ == "__main__":
     # 测试天气查询
     weather_query = WeatherQuery()
-    user_info = UserInfo(user_id=1, ticket_info={})
+    user_info = UserInfo(user_id="1", ticket_info={})
     history = []
     parameter = {"地名": "北京"}
 

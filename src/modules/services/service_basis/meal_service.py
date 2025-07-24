@@ -1,3 +1,10 @@
+from .utils import PATH_TO_ROOT
+import sys, os
+if str(PATH_TO_ROOT) not in sys.path:
+    sys.path.append(str(PATH_TO_ROOT))
+# 路径常量集中管理
+DATASET_ITEM_PATH = PATH_TO_ROOT / 'dataset' / 'meal_service' / 'item.csv'
+
 import pandas as pd
 import re, json
 import numpy as np
@@ -7,19 +14,15 @@ import time
 from typing import Iterable
 
 
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from src.modules.service.basis.tool import Tool
-from src.modules.service.user_info import UserInfo
+
+from src.modules.services.service_basis.basis.tool import Tool
+from src.modules.services.service_basis.user_info import UserInfo
 from src.utils.chatgpt import feed_LLM
 
 
 
 
-# 路径常量集中管理
-import os
-PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-DATASET_ITEM_PATH = os.path.join(PATH_TO_ROOT, 'dataset', 'meal_service', 'item.csv')
+
 
 
 
@@ -177,6 +180,8 @@ class MealService(Tool):
         for chunk in completion_generator:
             completion += chunk.choices[0].delta.content
         match = re.search(r'\s*(\{.*\})\s*', completion, re.DOTALL)
+        if not match:
+            raise ValueError("No dictionary block found in LLM response.")
         judge_result = eval(match.group(1))
         for key, val in judge_result.items():
             if val is not None:
@@ -306,7 +311,8 @@ class MealService(Tool):
 if __name__ == "__main__":
     meal_service = MealService()
 
-    user_info = {"出生地":"上海", "性别":"男", "年龄":"19", "当前日期": "2025-5-11"}
+    # user_info = {"出生地":"上海", "性别":"男", "年龄":"19", "当前日期": "2025-5-11"}
+    user_info = UserInfo(user_id="362531200504090911", ticket_info={})
     history = [{'role':'user', 'content':'我想吃点脆脆的蔬菜，酸辣口味的，你有什么推荐的吗？'}, {'role':'assistant', 'content':'Thought:'}]
 
     start = time.time()

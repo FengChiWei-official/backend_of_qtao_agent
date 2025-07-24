@@ -3,16 +3,16 @@ import logging
 logger = logging.getLogger(__name__)
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, PATH_TO_ROOT)
-from src.modules.dbController.db_controller import DatabaseController
 from src.modules.dbController.dataModels import User, Conversation, DialogueRecord
+from src.modules.dbController.db_controller import DatabaseController
+
 from config.loadConfig import ConfigLoader
-from unittest.mock import patch
 from datetime import datetime
 class TestDataBaseController(unittest.TestCase):
     def setUp(self):
         # 使用sqlite内存数据库，避免真实数据库依赖
         self.config = ConfigLoader(os.path.join(PATH_TO_ROOT, "config", "config.yaml"))
-        self.db_controller = DatabaseController(self.config.get_db_config(), is_regenerating_table=True)
+        self.db_controller = DatabaseController(self.config.get_db_config())
         # 只保留一个用户
         self.test_user = User(username="testuser233", id="233333", password_hash="dummyhash", email="testuser@example.com")
         # 只保留一个会话
@@ -30,7 +30,7 @@ class TestDataBaseController(unittest.TestCase):
             logger.warning(f"Setup failed to delete user {self.test_user.id}: {e}")
             pass
         try:
-            self.db_controller.get_a_user_by_id(self.test_user.id)
+            self.db_controller.get_user_by_id(self.test_user.id)
             raise RuntimeError("用户未被成功删除，主键冲突风险")
         except (LookupError, ValueError):
             pass
@@ -41,6 +41,9 @@ class TestDataBaseController(unittest.TestCase):
         # 3. Robustness: Try to create the same user again, should raise LookupError
         with self.assertRaises(LookupError):
             self.db_controller.create_user(self.test_user)
+        
+        with self.assertRaises(ValueError):
+            pass
 
         # 注释说明：确保创建相同用户时抛出异常
         # 这里的测试确保了用户创建的健壮性和正确性
@@ -54,7 +57,7 @@ class TestDataBaseController(unittest.TestCase):
         # - 用户必须存在，否则查询会报错
         # - 用户不能被软删除，否则查询会抛异常
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
             # 如果用户被软删除，则重新插入
         except LookupError:
             # 用户不存在，插入新用户
@@ -85,7 +88,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_get_a_user_by_id(self):
         # 1. Setup: Ensure user exists and is not soft-deleted
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -93,12 +96,12 @@ class TestDataBaseController(unittest.TestCase):
             self.db_controller.delete_user(self.test_user.id, is_hard_delete=True)
             user = self.db_controller.create_user(self.test_user)
         # 2. Test: Get user by id
-        fetched_user = self.db_controller.get_a_user_by_id(self.test_user.id)
+        fetched_user = self.db_controller.get_user_by_id(self.test_user.id)
         self.assertIsNotNone(fetched_user)
         self.assertEqual(fetched_user.id, self.test_user.id)
         # 3. Robustness: Try to get non-existent user, should raise LookupError
         with self.assertRaises(LookupError):
-            self.db_controller.get_a_user_by_id("nonexistentid")
+            self.db_controller.get_user_by_id("nonexistentid")
         # 注释说明：
         # - 第一步setup确保用户存在且未软删除。
         # - 第二步验证获取功能。
@@ -107,7 +110,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_update_user(self):
         # 1. Setup: Ensure user exists and is not soft-deleted
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -134,7 +137,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_hard_delete_user(self):
         # 1. Setup: Ensure user exists and is not soft-deleted
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -158,7 +161,7 @@ class TestDataBaseController(unittest.TestCase):
         # 3. Test: Hard delete user（级联删除会话和记录）
         self.db_controller.delete_user(user.id, is_hard_delete=True)
         with self.assertRaises(LookupError):
-            self.db_controller.get_a_user_by_id(user.id)
+            self.db_controller.get_user_by_id(user.id)
         with self.assertRaises(LookupError):
             self.db_controller.get_conversation_by_id(delete_conversation_obj.id)
         with self.assertRaises(LookupError):
@@ -178,7 +181,7 @@ class TestDataBaseController(unittest.TestCase):
         # 1. Setup: Ensure user exists and is not soft-deleted
 
         try:
-            user2 = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user2 = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user2 = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -200,7 +203,7 @@ class TestDataBaseController(unittest.TestCase):
         # 2. Test: Soft delete user（级联软删除会话和记录）
         self.db_controller.delete_user(user2.id, is_hard_delete=False)  # 执行软删除用户，应该级联软删除相关会话和记录
         with self.assertRaises(ValueError):
-            self.db_controller.get_a_user_by_id(user2.id)  # 查询被软删除的用户，应该抛出 ValueError
+            self.db_controller.get_user_by_id(user2.id)  # 查询被软删除的用户，应该抛出 ValueError
         with self.assertRaises(ValueError):
             self.db_controller.get_conversation_by_id(soft_conversation_obj.id)  # 查询被软删除的会话，应该抛出 ValueError
         with self.assertRaises(ValueError):
@@ -219,7 +222,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_create_conversation(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除，且 session 不存在
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -246,7 +249,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_get_conversation_by_id(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -272,7 +275,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_update_conversation(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -298,7 +301,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_hard_delete_conversation(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -331,7 +334,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_soft_delete_conversation(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -365,7 +368,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_create_dialogue_record(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -392,7 +395,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_get_record_by_record_id(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -419,7 +422,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_update_dialogue_record(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -448,7 +451,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_hard_delete_dialogue_record(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -475,7 +478,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_soft_delete_dialogue_record(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            self.db_controller.get_a_user_by_id(self.test_user.id)
+            self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             self.db_controller.create_user(self.test_user)
         except ValueError:
@@ -505,7 +508,7 @@ class TestDataBaseController(unittest.TestCase):
     def test_get_records_by_conversation_id(self):
         # Step 1: Setup 环境，确保用户存在且未被软删除
         try:
-            user = self.db_controller.get_a_user_by_id(self.test_user.id)
+            user = self.db_controller.get_user_by_id(self.test_user.id)
         except LookupError:
             user = self.db_controller.create_user(self.test_user)
         except ValueError:

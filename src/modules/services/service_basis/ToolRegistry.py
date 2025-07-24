@@ -1,4 +1,10 @@
-from src.modules.service.basis.tool import Tool
+import os, sys
+
+from .utils import PATH_TO_ROOT
+if str(PATH_TO_ROOT) not in sys.path:
+    sys.path.append(str(PATH_TO_ROOT))
+
+from src.modules.services.service_basis.basis.tool import Tool
 
 
 class Registry:

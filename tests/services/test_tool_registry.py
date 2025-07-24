@@ -1,6 +1,6 @@
 import unittest
-from src.modules.service.ToolRegistry import Registry
-from src.modules.service.basis.tool import Tool
+from src.modules.services.service_basis.ToolRegistry import Registry
+from src.modules.services.service_basis.basis.tool import Tool
 
 class DummyTool(Tool):
     def __init__(self, name):

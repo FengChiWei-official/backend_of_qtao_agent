@@ -1,6 +1,17 @@
 import pandas as pd
-from src.modules.service.user_info import UserInfo
-from src.modules.service.basis.tool import Tool
+
+import os, sys
+
+from .utils import PATH_TO_ROOT
+if str(PATH_TO_ROOT) not in sys.path:
+    sys.path.append(str(PATH_TO_ROOT))
+from src.modules.services.service_basis.user_info import UserInfo
+from src.modules.services.service_basis.basis.tool import Tool
+
+# 路径常量集中管理
+
+TICKET_CSV_PATH = PATH_TO_ROOT / 'dataset' / 'ticket_service' / 'ticket.csv'
+
 
 ticketquery_desc = '''车票查询：本接口用于从数据库中查询符合用户要求的火车票。接口输入格式：{"起始站":<起始高铁站>, "终点站":<终点高铁站>, "发车日期":<发车日期>, "到站日期":<到站日期>, "最早发车时刻":<最早发车时刻>, "最晚发车时刻":<最晚发车时刻>, "最早到站时刻":<最早到站时刻>, "最晚到站时刻":<最晚到站时刻>}，其中：时刻的格式都应该形如"08:15"、日期的格式都应该形如"2025-6-7"、起始站和终点站不可缺失、用None作缺失值表示不作要求'''
 
@@ -11,10 +22,7 @@ class TicketQuery(Tool):
     def __init__(self, name="车票查询", description=ticketquery_desc):
         super().__init__(name, description)
         # 兼容容器和本地开发环境，始终从项目根目录定位 dataset/ticket.csv
-        from pathlib import Path
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        ticket_csv_path = project_root / 'dataset' / 'ticket_service' / 'ticket.csv'
-        self.tickets = pd.read_csv(ticket_csv_path)
+        self.tickets = pd.read_csv(TICKET_CSV_PATH)
         self.tickets.drop('软卧/动卧/一等卧', axis=1, inplace=True)
         self.tickets = self.tickets.groupby(['起始站', '终点站']).apply(lambda X: X)
         self.tickets['出发日期'] = pd.to_datetime(self.tickets['出发日期'], format="mixed")

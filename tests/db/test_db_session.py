@@ -10,7 +10,7 @@ class TestDataBaseSession(unittest.TestCase):
     def setUp(self):
         # 使用sqlite内存数据库，避免真实数据库依赖
         self.config = ConfigLoader(os.path.join(PATH_TO_ROOT, "config", "config.yaml"))
-        self.db_session = DataBaseSession(self.config.get_db_config(), is_regenerating_table=True)
+        self.db_session = DataBaseSession(self.config.get_db_config())
 
     def test_get_session(self):
         # 测试能否成功获取session
@@ -31,7 +31,7 @@ class TestDataBaseSession(unittest.TestCase):
             }
         }
         with patch("src.modules.dbController.basis.dbSession.create_engine") as mock_engine:
-            DataBaseSession(config, is_regenerating_table=False)
+            DataBaseSession(config)
             mock_engine.assert_called_once()
             # 检查参数
             args, kwargs = mock_engine.call_args
@@ -62,7 +62,7 @@ class TestDataBaseSession(unittest.TestCase):
             }
         }
         with patch("src.modules.dbController.basis.dbSession.create_engine") as mock_engine:
-            DataBaseSession(config, is_regenerating_table=False)
+            DataBaseSession(config)
             mock_engine.assert_called_once()
             args, kwargs = mock_engine.call_args
             self.assertEqual(args[0], "mysql+pymysql://root:123456@localhost:3306/test_db")
