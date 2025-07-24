@@ -8,3 +8,5 @@ class DAO:
         self.user_dao = UserDAO(db_connection_manager)
         self.conversation_dao = ConversationDAO(db_connection_manager)
         self.dialogue_record_dao = DialogueRecordDAO(db_connection_manager)
+
+
