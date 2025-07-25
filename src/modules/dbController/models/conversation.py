@@ -5,11 +5,7 @@ from typing import Optional
 from sqlalchemy import String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-
+from .base import Base
 
 
 class Conversation(Base):

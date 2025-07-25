@@ -2,18 +2,16 @@ from fastapi import APIRouter, HTTPException, Depends, status, Header
 from pydantic import BaseModel, Field
 from typing import Optional, TYPE_CHECKING, List, Any, Dict
 from src.utils.response import BaseResponse
+from src.utils.auth_dependency import encode_user_id, get_current_user
 
 if TYPE_CHECKING:
     from src.modules.services.business.conversation_bussiness import ConversationBusiness
     from src.modules.services.business.record_bussiness import DialogueRecordBusiness
 
-router = APIRouter()
+
 
 def get_conversation_business() -> 'ConversationBusiness':
     raise NotImplementedError("请在 main.py 中通过 Depends 覆盖此依赖")
-
-def get_current_user(Authorization: Optional[str] = Header(None)):
-    raise NotImplementedError("请在 auth_dependency.py 中实现用户认证")
 
 def get_record_business() -> 'DialogueRecordBusiness':
     raise NotImplementedError("请在 main.py 中通过 Depends 覆盖此依赖")
@@ -33,10 +31,23 @@ class SessionsResponse(BaseModel):
 class HistoryResponse(BaseModel):
     history: List[Dict[str, Any]]
 
+
+
+
+
+
+router = APIRouter(prefix="/api/v1", tags=["conversation"])
+
+
+
+
+
+
+
 @router.post("/session", summary="创建新会话", response_model=BaseResponse)
 def create_session(req: CreateSessionRequest, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
-        user_id = current_user["user_id"]
+        user_id = current_user
         session = conversation_business.create_conversation(user_id, req.name)
         return BaseResponse(msg="Session created", data={"session": session.__dict__})
     except ValueError as e:
@@ -109,7 +120,7 @@ def get_session(session_id: str, current_user=Depends(get_current_user), convers
 @router.get("/sessions", summary="列出所有会话", response_model=BaseResponse)
 def list_sessions(current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
-        user_id = current_user["user_id"]
+        user_id = current_user  # 修正为直接取字符串
         sessions = conversation_business.list_user_conversations(user_id)
         return BaseResponse(msg="Success", data={"sessions": [s.__dict__ for s in sessions]})
     except LookupError as e:

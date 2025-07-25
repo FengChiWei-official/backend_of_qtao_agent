@@ -6,8 +6,8 @@ from typing import List
 from datetime import datetime
 
 class DialogueRecordBusiness:
-    def __init__(self, dialogue_record_dao: DialogueRecordDAO):
-        self.dialogue_record_dao = dialogue_record_dao
+    def __init__(self, config: dict):
+        self.dialogue_record_dao = DialogueRecordDAO(config)
 
     def create_record(
         self,
@@ -56,5 +56,6 @@ class DialogueRecordBusiness:
         self.dialogue_record_dao.delete_dialogue_record(record_id, is_hard_delete)
 
     def list_records_by_conversation(self, conversation_id: str, last_n: int | None = None) -> List[DialogueRecordDTO]:
+
         records = self.dialogue_record_dao.get_records_by_conversation_id(conversation_id, last_n=last_n)
         return [DialogueRecordDTO.from_obj(r) for r in records]

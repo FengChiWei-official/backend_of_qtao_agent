@@ -9,8 +9,8 @@ from sqlalchemy.exc import IntegrityError
 logger = logging.getLogger(__name__)
 
 class DialogueRecordDAO:
-    def __init__(self, db_session_manager: DatabaseSessionManager):
-        self.__db_session_manager = db_session_manager
+    def __init__(self, config: dict):
+        self.__db_session_manager = DatabaseSessionManager(config)
 
     def get_record_by_record_id(self, record_id: str) -> DialogueRecord:
         """

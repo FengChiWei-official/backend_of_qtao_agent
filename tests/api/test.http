@@ -1,0 +1,134 @@
+### User Management
+#### User Registration
+GET 127.0.0.1:8000/docs
+content-type: application/json
+
+
+#### User Registration
+POST 127.0.0.1:8000/api/v1/register
+content-type: application/json
+
+{
+  "username": "shenjie",
+  "password": "qwq233383",
+  "id": "310103200411074017",
+  "answer": "韶关",
+  "email": "qwq"
+}
+
+
+
+
+#### User Login
+POST 127.0.0.1:8000/api/v1/login
+content-type: application/json
+
+{
+  "username": "shenjie",
+  "password": "qwq233383"
+}
+
+
+#### User Logout
+POST 127.0.0.1:8000/api/v1/protected/logout
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "username": "testuser"
+}
+
+#### Get User Info
+GET 127.0.0.1:8000/api/v1/protected/userinfo
+content-type: application/json
+Authorization: Bearer {{token}}
+
+
+### Chat Functionality
+####  Chat Message with Session for New Session
+POST 127.0.0.1:8000/api/v1/chat
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "session_id": "{{session_id}}",
+  "query": "你好"
+}
+
+
+####  Chat Message with Session for New Session
+POST 127.0.0.1:8000/api/v1/chat
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "session_id": "{{session_id}}",
+  "query": "查询明天早上重庆到北京的车票"
+}
+
+####  Chat Message with Session for New Session
+POST 127.0.0.1:8000/api/v1/chat
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "session_id": "{{session_id}}",
+  "query": "推荐重庆的面馆"
+}
+
+
+#### Get Chat History
+GET 127.0.0.1:8000/api/v1/session/{{session_id}}/history
+content-type: application/json
+Authorization: Bearer {{token}}
+
+
+
+
+
+
+### Session Management
+
+#### Create New Session
+POST 127.0.0.1:8000/api/v1/session
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": ""
+}
+
+
+
+
+
+#### Get Session Details
+GET 127.0.0.1:8000/api/v1/session/{{session_id}}
+content-type: application/json
+Authorization: Bearer {{token}}
+
+
+#### List All Sessions
+GET 127.0.0.1:8000/api/v1/sessions
+content-type: application/json
+Authorization: Bearer {{token}}
+
+
+#### Update Session Name
+PUT 127.0.0.1:8000/api/v1/session/{{session_id}}/name
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "新的会话名称"
+}
+
+
+#### Delete Session
+DELETE 127.0.0.1:8000/api/v1/session/00966d5c-2655-4e00-b6d9-c7da1073ce46
+content-type: application/json
+Authorization: Bearer {{token}}
+
+
+### Static resource
+GET 127.0.0.1:8000/images/1_1_1.jpg

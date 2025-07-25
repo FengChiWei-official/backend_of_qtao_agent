@@ -3,9 +3,8 @@ from typing import Optional
 
 from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 
 
@@ -26,7 +25,7 @@ class User(Base):
     is_removed: Mapped[bool] = mapped_column(Boolean, default=False)  # 是否被删除
     # 关系定义
     sessions = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
-    dialogues = relationship("DialogueRecord", back_populates="user")
+    dialogues = relationship("DialogueRecord", back_populates="user", cascade="all, delete-orphan")
 
 
 

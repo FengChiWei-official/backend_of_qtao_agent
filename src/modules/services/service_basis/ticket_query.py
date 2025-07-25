@@ -22,13 +22,13 @@ class TicketQuery(Tool):
     def __init__(self, name="车票查询", description=ticketquery_desc):
         super().__init__(name, description)
         # 兼容容器和本地开发环境，始终从项目根目录定位 dataset/ticket.csv
-        self.tickets = pd.read_csv(TICKET_CSV_PATH)
+        self.tickets = pd.read_csv(TICKET_CSV_PATH, low_memory=False)
         self.tickets.drop('软卧/动卧/一等卧', axis=1, inplace=True)
         self.tickets = self.tickets.groupby(['起始站', '终点站']).apply(lambda X: X)
         self.tickets['出发日期'] = pd.to_datetime(self.tickets['出发日期'], format="mixed")
         self.tickets['到达日期'] = pd.to_datetime(self.tickets['到达日期'], format='mixed')
-        self.tickets['出发时间'] = pd.to_datetime(self.tickets['出发时间'])
-        self.tickets['到达时间'] = pd.to_datetime(self.tickets['到达时间'])
+        self.tickets['出发时间'] = pd.to_datetime(self.tickets['出发时间'], format='mixed')
+        self.tickets['到达时间'] = pd.to_datetime(self.tickets['到达时间'], format='mixed')
         
         # 创建城市名到车站名的映射
         self._build_city_station_mapping()

@@ -33,6 +33,18 @@ class ConfigLoader:
         self.config["db_type"] = db_type
         return self.config
     
+    def get_server_config(self) -> dict:
+        """
+        获取服务器配置
+        :return: 服务器配置字典
+        """
+        return self.config.get("server", {})
+    def get_config(self) -> dict:
+        """
+        获取完整配置
+        :return: 完整配置字典
+        """
+        return self.config
 
 default_config = {
     "db_type": "mysql",

@@ -4,13 +4,14 @@ from typing import Optional, TYPE_CHECKING, Any
 import uuid
 
 from src.utils.response import BaseResponse
-
+from src.utils.auth_dependency import encode_user_id, get_current_user
 if TYPE_CHECKING:
     from src.modules.services.business.user_bussiness import UserBusiness
-from src.utils.auth_dependency import encode_user_id
 
 
-router = APIRouter()
+
+
+router = APIRouter(prefix="/api/v1", tags=["user"])
 
 def get_user_business() -> 'UserBusiness':
     raise NotImplementedError("请在 main.py 中通过 Depends 覆盖此依赖")
@@ -120,9 +121,6 @@ def login(req: LoginRequest, user_business: 'UserBusiness' = Depends(get_user_bu
             }
         )
 
-# 需要 token 认证的依赖（示例，实际应校验 token）
-def get_current_user(Authorization: Optional[str] = Header(None)) -> str:
-    raise NotImplementedError("请在 auth_dependency.py 中实现 token 校验")
 
 @router.post("/protected/logout", summary="用户登出", response_model=BaseResponse)
 def logout(req: LogoutRequest, current_user=Depends(get_current_user)):
@@ -132,7 +130,7 @@ def logout(req: LogoutRequest, current_user=Depends(get_current_user)):
 @router.get("/protected/userinfo", summary="获取用户信息", response_model=BaseResponse)
 def get_user_info(current_user=Depends(get_current_user), user_business: 'UserBusiness' = Depends(get_user_business)):
     try:
-        user_id = current_user["user_id"]
+        user_id = current_user  # 修正为直接取字符串
         user = user_business.get_user_info(user_id)
         return BaseResponse(msg="Success", data={"user": user.__dict__})
     except LookupError as e:

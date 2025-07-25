@@ -84,8 +84,13 @@ class State:
 
 
     @property
-    def __load_history_DTO(self):
-        return self.__dependency_record_bussiness.list_records_by_conversation(self.__conversation_id, last_n=10)
+    def __load_history_DTO(self) -> list:
+        try:
+            history = self.__dependency_record_bussiness.list_records_by_conversation(self.__conversation_id, last_n=10)
+        except LookupError as e:
+            # 如果没有找到记录，返回空列表
+            return []
+        return history
 
     def __load_history(self) -> list[dict]:
         """
@@ -111,7 +116,7 @@ class State:
             system_thoughts=json.dumps(self.__context),
             image_list=self.__final_answer.get("picture", []),
         )
-        raise NotImplementedError("This method should be implemented in subclasses.")
+
     
     def __start_context(self):
         """
@@ -148,15 +153,22 @@ class State:
         # 提取 Action Input
         input_match = re.search(r"Action Input:\s*(.*)", raw_thought_action, re.DOTALL)
         action_input = input_match.group(1).strip() if input_match else ""
-        try: 
-            action_input = json.loads(action_input)
-        except json.JSONDecodeError:
-            raise ValueError(f"无法解析Action Input: {action_input}")
-
+        # 更稳健的解析
+        if isinstance(action_input, dict):
+            parsed_input = action_input
+        else:
+            try:
+                parsed_input = json.loads(action_input)
+            except Exception:
+                # 如果是空字符串或无法解析，尝试直接用原始内容
+                if action_input == "" or action_input == "{}":
+                    parsed_input = {}
+                else:
+                    raise ValueError(f"无法解析Action Input: {action_input}")
         self.__thought_action = {
             "thought": thought,
             "action": action,
-            "action_input": action_input,
+            "action_input": parsed_input,
             "observation": "",
             "raw": raw_thought_action
         }
@@ -166,7 +178,11 @@ class State:
         关闭thought_action状态, push到context
         """
         self.__thought_action["observation"] = observation
-        self.__thought_action["raw"] = self.__thought_action["raw"] + "\nObservation: " + observation
+        try:
+            old_raw = self.__thought_action["raw"]
+        except KeyError as e:
+            old_raw = ""
+        self.__thought_action["raw"] = old_raw + "\nObservation: " + observation
 
     def __set_final_answer(self, raw_final_answer: str):
         """
@@ -273,10 +289,11 @@ class State:
         :return: 查询字符串
         """
         history = self.__load_history()
-        contexts = [idx["raw"] for idx in self.__context]
+
+        contexts = [idx.get("raw") for idx in self.__context]
         new_message = {
             "role": "user",
-            "content": self._load_prompt_template() + self.__query + "\n".join(contexts)
+            "content": self._load_prompt_template() + self.__query + "\n".join(str(c) for c in contexts if c is not None)
         }
         history.append(new_message)
         return history
@@ -304,7 +321,7 @@ class State:
         :return: 提示模板字符串
         """
         return self.__prompt_template.format(
-            tools_description=self.__tools_description,
+            str_tool_description=self.__tools_description,
             date=str(datetime.datetime.now()),  # Example of adding a timestamp
-            tools_names=", ".join(self.__tools_names)  # Example of adding tool names
+            tool_names=", ".join(self.__tools_names)  # Example of adding tool names
         )

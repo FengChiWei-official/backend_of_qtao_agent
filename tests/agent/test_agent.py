@@ -59,7 +59,7 @@ def test_agent_tool_call(monkeypatch):
     agent = Agent(
         user_id="test_user",
         conversation_id="conv_1",
-        record_bussiness=mock_record_business,
+        record_business=mock_record_business,
         tools=registry,
         prompt_template=prompt_template
     )

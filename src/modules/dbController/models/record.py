@@ -6,10 +6,21 @@ from typing import Optional, List
 from sqlalchemy import String, ForeignKey, Text, Boolean, DateTime, types
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sqlalchemy.orm import declarative_base
+from .base import Base
 
-Base = declarative_base()
+class JsonEncodedList(types.TypeDecorator):
+    """自定义类型，用于存储JSON编码的列表"""
+    impl = Text
 
+    def process_bind_param(self, value: Optional[List[str]], dialect) -> Optional[str]:
+        if value is None or value == []:
+            return '[]'
+        return json.dumps(value)
+
+    def process_result_value(self, value: Optional[str], dialect) -> Optional[List[str]]:
+        if value is None or value == '[]':
+            return []
+        return json.loads(value)
 
 
 class DialogueRecord(Base):
@@ -39,16 +50,3 @@ class DialogueRecord(Base):
         return f"<DialogueRecord {self.id[:8]}>"
 
 
-class JsonEncodedList(types.TypeDecorator):
-    """自定义类型，用于存储JSON编码的列表"""
-    impl = Text
-
-    def process_bind_param(self, value: Optional[List[str]], dialect) -> Optional[str]:
-        if value is None or value == []:
-            return '[]'
-        return json.dumps(value)
-
-    def process_result_value(self, value: Optional[str], dialect) -> Optional[List[str]]:
-        if value is None or value == '[]':
-            return []
-        return json.loads(value)

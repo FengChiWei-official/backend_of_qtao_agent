@@ -10,8 +10,8 @@ from sqlalchemy.orm import make_transient
 logger = logging.getLogger(__name__)
 
 class ConversationDAO:
-    def __init__(self, db_session_manager: DatabaseSessionManager):
-        self.__db_session_manager = db_session_manager
+    def __init__(self, config: dict):
+        self.__db_session_manager = DatabaseSessionManager(config)
 
     def create_conversation(self, conversation: Conversation) -> Conversation:
         """

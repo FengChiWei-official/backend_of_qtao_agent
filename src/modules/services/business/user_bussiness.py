@@ -12,8 +12,8 @@ def to_hash(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 class UserBusiness:
-    def __init__(self, user_dao: UserDAO):
-        self.user_dao = user_dao
+    def __init__(self, config: dict):
+        self.user_dao = UserDAO(config)
 
     def register_user(self, user_id: str, username: str, email: str, password: str) -> UserDTO:
         """
@@ -108,6 +108,6 @@ class UserBusiness:
         :param user_id: 用户 ID
         :param is_hard_delete: 是否进行硬删除
         :raises LookupError: 如果用户不存在
-        :raises ValueError: 如果用户已被软删除
+        
         """
         self.user_dao.delete_user(user_id, is_hard_delete)

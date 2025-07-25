@@ -12,7 +12,7 @@ def feed_LLM_full(history: list) -> Iterable:
         api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
-    messages = [ChatCompletionUserMessageParam(role=msg.role, content=msg.content) for msg in history]
+    messages = [ChatCompletionUserMessageParam(role=msg["role"], content=msg["content"]) for msg in history]
     completion = client.chat.completions.create(
         model="qwen-max",
         messages=messages,

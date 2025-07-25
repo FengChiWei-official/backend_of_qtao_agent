@@ -4,8 +4,8 @@ from src.modules.services.dto.dto import ConversationDTO
 from typing import List
 
 class ConversationBusiness:
-    def __init__(self, conversation_dao: ConversationDAO):
-        self.conversation_dao = conversation_dao
+    def __init__(self, config: dict):
+        self.conversation_dao = ConversationDAO(config)
 
     def create_conversation(self, user_id: str, session_name: str | None = None) -> ConversationDTO:
         """
