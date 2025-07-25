@@ -2,7 +2,7 @@ import unittest
 import json
 import os
 from pathlib import Path
-from src.modules.service_basis import utils
+from src.modules.services.service_basis import utils
 
 class TestUtils(unittest.TestCase):
     @classmethod

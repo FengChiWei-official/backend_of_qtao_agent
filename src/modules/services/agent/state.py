@@ -1,13 +1,12 @@
 import sys
 import json
-from .utils import PATH_TO_ROOT
-if str(PATH_TO_ROOT) not in sys.path:
-    sys.path.append(str(PATH_TO_ROOT))
+from src.utils.root_path import get_root_path
+if str(get_root_path()) not in sys.path:
+    sys.path.append(str(get_root_path()))
 
 from .utils import Looper
 
 from src.modules.services.service_basis.user_info import UserInfo  # Adjust the import path as needed
-from src.modules.services.dto.dto import DialogueRecordDTO
 from ..business.record_bussiness import DialogueRecordBusiness
 
 

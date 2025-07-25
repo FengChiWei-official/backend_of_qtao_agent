@@ -1,9 +1,10 @@
 from typing import Any
 from .state import State
-from .utils import PATH_TO_ROOT
+from src.utils.root_path import get_root_path
 import sys
-if str(PATH_TO_ROOT) not in sys.path:
-    sys.path.append(str(PATH_TO_ROOT))
+if str(get_root_path()) not in sys.path:
+    sys.path.append(str(get_root_path()))
+    
 from src.modules.services.business.record_bussiness import DialogueRecordBusiness  # 修正import路径
 from src.utils.chatgpt import feed_LLM_full, gather_llm_output
 from src.modules.services.service_basis.ToolRegistry import Registry
