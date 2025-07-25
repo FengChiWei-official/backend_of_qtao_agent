@@ -76,6 +76,12 @@ class UserDAO:
                 raise
 
     def get_user_by_id(self, user_id: str) -> User:
+        """
+        :param user_id: 用户ID
+        :return: User对象
+        :raises LookupError: 如果用户不存在
+        :raises ValueError: 如果用户已被软删除
+        """
         with self.__db_session_manager.get_session() as session:
             user = session.query(User).filter(User.id == user_id).first()
             if not user:

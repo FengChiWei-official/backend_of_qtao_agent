@@ -19,7 +19,7 @@ class Agent():
         self.tools = tools
         self.user_info = UserInfo(user_id=user_id, ticket_info={})
 
-    def __call__(self, query: str) -> Any:
+    def __call__(self, query: str) -> dict:
         self.state.handle_user_query(query)
         
         while True:
