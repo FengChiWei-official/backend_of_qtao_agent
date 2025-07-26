@@ -5,6 +5,6 @@ from functools import lru_cache
 def get_root_path() -> Path:
     for i in range(10):
         t = Path(__file__).resolve().parents[i]
-        if t.name == 'backend':
+        if t.name == 'neo_backend':
             return t
     raise FileNotFoundError("Project root not found in the expected directory structure.")

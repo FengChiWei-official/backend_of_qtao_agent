@@ -9,7 +9,7 @@ from config import ConfigLoader
 from fastapi.middleware.cors import CORSMiddleware
 
 PATH_TO_ROOT = root_path.get_root_path()
-PATH_TO_CONFIG = PATH_TO_ROOT / "config"/"config.yaml"
+PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
 
 if __name__ == "__main__":
     import uvicorn
