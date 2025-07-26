@@ -1,12 +1,8 @@
 import logging
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from src.modules import *
-from src.utils import BaseResponse, root_path
+
+from src.utils import root_path
 from config import ConfigLoader
-from fastapi.middleware.cors import CORSMiddleware
+
 
 PATH_TO_ROOT = root_path.get_root_path()
 PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
