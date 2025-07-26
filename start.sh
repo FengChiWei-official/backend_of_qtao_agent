@@ -1,0 +1,1 @@
+conda run -n app python ./src/main.py
