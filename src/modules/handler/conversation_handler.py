@@ -48,6 +48,7 @@ router = APIRouter(prefix="/api/v1", tags=["conversation"])
 def create_session(req: CreateSessionRequest, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         user_id = current_user
+
         session = conversation_business.create_conversation(user_id, req.name)
         return BaseResponse(msg="Session created", data={"session": session.__dict__})
     except ValueError as e:

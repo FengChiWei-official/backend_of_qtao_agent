@@ -108,6 +108,15 @@ note: 调用了这个工具就要输出 images = ["<图片链接1>", "<图片链
 
 soft_constraints = ["Beijing", "Tianjin", "Hebei", "Shanxi", "Nei Mongol", "Liaoning", "Jilin", "Heilongjiang", "Shanghai", "Jiangsu", "Zhejiang", "Anhui", "Fujian", "Jiangxi", "Shandong", "Henan", "Hubei", "Hunan", "Guangdong", "Guangxi", "Hainan", "Chongqing", "Sichuan", "Guizhou", "Yunnan", "Xizang", "Shanxi2", "Gansu", "Qinghai", "Ningxia", "Xinjiang", "child", "teenager", "adult", "middle-ager", "elderly", "breakfast", "lunch", "dinner", "afternoon-tea", "night-snack", "male", "female", "spring", "summer", "autumn", "winter"]
 
+mapping = {
+    'Beijing': '北京', 'Tianjin': '天津', 'Hebei': '河北', 'Shanxi': '山西', 'Nei Mongol': '内蒙古', 'Liaoning': '辽宁', 'Jilin': '吉林', 'Heilongjiang': '黑龙江', 'Shanghai': '上海', 'Jiangsu': '江苏', 'Zhejiang': '浙江', 'Anhui': '安徽', 'Fujian': '福建', 'Jiangxi': '江西', 'Shandong': '山东', 'Henan': '河南', 'Hubei': '湖北', 'Hunan': '湖南', 'Guangdong': '广东', 'Guangxi': '广西', 'Hainan': '海南', 'Chongqing': '重庆', 'Sichuan': '四川', 'Guizhou': '贵州', 'Yunnan': '云南', 'Xizang': '西藏', 'Shanxi2': '陕西', 'Gansu': '甘肃', 'Qinghai': '青海', 'Ningxia': '宁夏', 'Xinjiang': '新疆',
+    'child': '儿童', 'teenager': '青年', 'adult': '成年人', 'middle-ager': '中年人', 'elderly': '老年人',
+    'breakfast': '早餐', 'lunch': '午餐', 'dinner': '晚餐', 'afternoon-tea': '下午茶', 'night-snack': '夜宵',
+    'male': '男', 'female': '女',
+    'spring': '春', 'summer': '夏', 'autumn': '秋', 'winter': '冬'
+}
+
+# 导出按顺序排列的值
 
 
 class MealService(Tool):
@@ -293,7 +302,8 @@ class MealService(Tool):
         # vectors = filtered_items[soft_constraints].to_numpy()
         vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
         # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
-        vector = np.array(list(query.values())[8:]).reshape(1,-1)
+        vector = np.array(query.get(mapping.get(k), 3) for k in soft_constraints).reshape(1, -1)
+        # vector = np.array(list(query.values())[8:]).reshape(1,-1)
         sim = cosine_similarity(vector, vectors)
         top_idx = sim.argmax(axis=1)
         # print(filtered_items)

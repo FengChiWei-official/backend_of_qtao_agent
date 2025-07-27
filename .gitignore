@@ -27,7 +27,7 @@ __pycache__/
 .local.env
 config.local.*
 secrets.ini    # 密钥文件
-alembic.ini
+config/alembic.ini
 
 # ==============================
 # 日志 & 运行时文件

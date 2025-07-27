@@ -55,17 +55,21 @@ class State:
     
 
     """
-    def __init__(self, user_id: str, conversation_id:str, 
-                 record_bussiness: DialogueRecordBusiness, 
+    def __init__(self, user_id: str, conversation_id:str,
+                 record_business: DialogueRecordBusiness,
                  prompt_template: str,
                  tools_description: str,
                  tools_names: list[str],
                  patient: int = 3):
+        if user_id is None or user_id == "":
+            raise ValueError("user_id cannot be None or empty")
         self.__user_id = user_id
         self.__user_info = UserInfo(user_id)
+        if conversation_id is None or conversation_id == "":
+            raise ValueError("conversation_id cannot be None or empty")
         self.__conversation_id = conversation_id
 
-        self.__dependency_record_bussiness = record_bussiness
+        self.__dependency_record_bussiness = record_business
 
         self.__is_new_context_available = True
         self.looper = Looper(patient)
@@ -303,7 +307,16 @@ class State:
         生成最终答案
         :return: 最终答案字符串
         """
-        return self.__final_answer
+        # modify the final answer to return a dictionary
+
+        #todo: redefine finalans
+        ans = {
+            "system_response": self.__final_answer.get("answer", ""),
+            "system_thoughts": json.dumps(self.__context),
+            "image_list": self.__final_answer.get("picture", [])
+        }
+
+        return ans
     
     def generate_action_input_for_tools(self) -> tuple[str, dict]:
         """

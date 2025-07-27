@@ -26,6 +26,6 @@ def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager
         user_id = current_user
         agent = agent_manager.get_agent(user_id, req.session_id)
         answer = agent(req.query)
-        return BaseResponse(msg="success", data={"answer": answer})
+        return BaseResponse(msg="success", data=answer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
