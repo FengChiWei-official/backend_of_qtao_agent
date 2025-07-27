@@ -8,6 +8,6 @@ from config import ConfigLoader
 def get_root_path() -> Path:
     for i in range(10):
         t = Path(__file__).resolve().parents[i]
-        if "backend" in t.name:
+        if "backend" in t.name or "app" in t.name:
             return t
     raise FileNotFoundError("Project root not found in the expected directory structure.")

@@ -25,7 +25,7 @@ from src.utils.chatgpt import feed_LLM
 
 recommend_prompt = \
 '''
-【任务】 基于用户信息和历史对话，推荐用户最有可能想要的{top_k}个餐食
+【任务】 基于用户信息和历史对话,总结用户的特点，然后重点关注最后历史对话的最后一个问询，推荐用户最有可能想要的{top_k}个餐食
 【格式要求】 先进行思考和分析，然后按Python列表格式输出推荐结果：["<推荐餐食名1>", "<推荐餐食名2>", ..., "<推荐餐食名{top_k}>"]
 【用户信息】 {user_info}
 【历史对话】 {dialogue}
@@ -102,7 +102,7 @@ mealservice_desc = '''
 订餐服务：本接口用于从数据库中匹配最符合用户偏好与要求的餐厅或菜品。接口输入格式：该接口无需输入参数，填 {"parameter": {}} 即可。
 接口输出格式：返回一个列表，包含推荐的餐厅或菜品信息，每个元素是一个字典，包含餐厅或菜品的详细信息 e.g.最终推荐列表为：[{'food_id': '31_18_2', 'food_name': '皇堡'}, {'food_id': '2_16_9', 'food_name': '原味圣代'}, {'food_id': '15_11_6', 'food_name': '米粉'}]
 note: 调用了这个工具就要输出 images = ["<图片链接1>", "<图片链接2>", ..., "<图片名称1>", "<图片名称2>", ...]，其中每个图片链接都是一个字符串，表示餐厅或菜品的图片链接
-     链接格式： images/<菜品id>.jpg， 也就是接口输出中的"\d_\d_\d"
+     链接格式： images/<菜品id>.jpg， 也就是接口输出中的"\\d_\\d_\\d"
      图片名称： 就是对应菜品的名字，比如假如你观察到observation 有一句： 推荐小笼包（2-3-4），你就要输出 images = ["/images/2-3-4.jpg", "小笼包"]，注意图片链接和图片名称之间用逗号分隔开来
 。'''
 
@@ -156,7 +156,7 @@ class MealService(Tool):
 
     def recommend(self, user_info: UserInfo, history: list):
         # 使用大模型进行零样本对话式推荐
-        prompt = recommend_prompt.format(top_k=3, user_info=user_info, dialogue=history[:-1])
+        prompt = recommend_prompt.format(top_k=3, user_info=user_info, dialogue=history[-3:])
         completion_generator = feed_LLM(prompt)
         completion = ''
         for chunk in completion_generator:
@@ -291,18 +291,20 @@ class MealService(Tool):
             filtered_items = self.items
         print("Filtered items shape:", filtered_items.shape)
         #print(filtered_items)
+
         indexes = (query['饮食类型'], query['菜系'], query['中西餐'])
         filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])| # To-Improve：怎么编码和匹配辣度更合适？（0, 1, 0, 0匹配出凉粉）
                                         (filtered_items['slightly-spicy']==query['微辣'])|
                                         (filtered_items['medium-spicy']==query['中辣'])|
                                         (filtered_items['extra-spicy']==query['特辣'])]
+        filtered_items = filtered_items.sort_index()
         filtered_items = filtered_items.loc[indexes]
         # print(filtered_items.shape)
         # print(filtered_items)
         # vectors = filtered_items[soft_constraints].to_numpy()
         vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
         # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
-        vector = np.array(query.get(mapping.get(k), 3) for k in soft_constraints).reshape(1, -1)
+        vector = np.array(list(query.get(mapping.get(k), 3) for k in soft_constraints)).reshape(1, -1)
         # vector = np.array(list(query.values())[8:]).reshape(1,-1)
         sim = cosine_similarity(vector, vectors)
         top_idx = sim.argmax(axis=1)

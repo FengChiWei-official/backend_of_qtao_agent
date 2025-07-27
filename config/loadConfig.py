@@ -51,7 +51,7 @@ default_config = {
     "mysql": {
         "user": "root",
         "password": "",
-        "host": "localhost",
+        "host": "smai_db",
         "port": 3306,
         "database": "test_db",
         "driver": "pymysql",

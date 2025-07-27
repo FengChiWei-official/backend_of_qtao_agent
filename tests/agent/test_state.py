@@ -117,7 +117,7 @@ def test_generate_query_for_llm(mock_dependencies):
     state = State(**mock_dependencies)
     setattr(state, '_State__query', 'hello')
     setattr(state, '_State__context', [{'raw': 'ctx1'}])
-    result = state.generate_query_for_llm()
+    result = state.generate_history_with_context_and_prompt()
     assert isinstance(result, list)
     assert any('content' in m for m in result)
 

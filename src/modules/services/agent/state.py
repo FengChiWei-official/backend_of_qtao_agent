@@ -161,14 +161,25 @@ class State:
         if isinstance(action_input, dict):
             parsed_input = action_input
         else:
+            # 先尝试直接解析
             try:
                 parsed_input = json.loads(action_input)
             except Exception:
-                # 如果是空字符串或无法解析，尝试直接用原始内容
+                # 空字符串或空对象
                 if action_input == "" or action_input == "{}":
                     parsed_input = {}
+                # 尝试正则提取 json
+                elif isinstance(action_input, str):
+                    match = re.search(r"{.*}", action_input.strip(), re.DOTALL)
+                    if match:
+                        try:
+                            parsed_input = json.loads(match.group(0))
+                        except Exception:
+                            parsed_input = match.group(0)
+                    else:
+                        parsed_input = action_input
                 else:
-                    raise ValueError(f"无法解析Action Input: {action_input}")
+                    parsed_input = str(action_input)
         self.__thought_action = {
             "thought": thought,
             "action": action,
@@ -234,6 +245,8 @@ class State:
         启动对话上下文
         """
         self.__query = query
+        # todo： 应该加一个锁， 如果已经有上下文了，就不再启动新的上下文
+        self.__context = []  # 清空上下文
     
     def _start_thought_action(self, raw_thought_action: str):
         """
@@ -287,7 +300,7 @@ class State:
         """
         self._close_thought_action_and_push_context(observation)
     
-    def generate_query_for_llm(self) -> list:
+    def generate_history_with_context_and_prompt(self, is_containing_prompt = True) -> list:
         """
         生成查询字符串以供LLM使用
         :return: 查询字符串
@@ -295,9 +308,13 @@ class State:
         history = self.__load_history()
 
         contexts = [idx.get("raw") for idx in self.__context]
+        contexts_str = self.__query + "\n".join(json.dumps(c, ensure_ascii=False) for c in contexts if c is not None)
+        if is_containing_prompt:
+            contexts_str = self._load_prompt_template() + contexts_str
+
         new_message = {
             "role": "user",
-            "content": self._load_prompt_template() + self.__query + "\n".join(str(c) for c in contexts if c is not None)
+            "content": contexts_str
         }
         history.append(new_message)
         return history

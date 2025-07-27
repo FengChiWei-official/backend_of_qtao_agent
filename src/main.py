@@ -18,6 +18,10 @@ if __name__ == "__main__":
         level=log_level,
         format=server_config.get("log_format", "%(asctime)s - %(levelname)s - %(message)s"),
         force=True,
+        handlers=[
+            logging.StreamHandler(),  # 输出到控制台
+            # logging.FileHandler(PATH_TO_ROOT / "logs" / "backend.log")  # 输出到文件
+        ]
     )
     uvicorn.run(
         "src.app:app",

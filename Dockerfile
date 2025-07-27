@@ -7,34 +7,29 @@ RUN groupadd -r app && useradd --no-log-init -r -g app app
 # 设置工作目录
 WORKDIR /app
 
-# 复制环境配置并创建环境
-COPY requirments.d/requirments.txt /app
-RUN conda env create -n app 
-# 激活环境
-RUN conda run -n app pip install -r requirments.txt && conda clean -afy
+# 复制 requirements.txt 并创建环境
+COPY requirements.txt /app/requirements.txt
+RUN conda create -n app python=3.10 -y 
 
-
-
-# 激活环境（后续命令都在 base 环境下执行）
+# 激活环境（后续命令都在 app 环境下执行）
 SHELL ["conda", "run", "-n", "app", "/bin/bash", "-c"]
+RUN pip install -r /app/requirements.txt
 
 # 复制项目代码（包含 config、src、static、dataset 等）
 COPY src /app/src
-COPY script /app/script
 # 创建挂载点
-RUN mkdir -p /app/static && chown app:app /app/static
-RUN mkdir -p /app/dataset && chown app:app /app/dataset
-# 经常变动的配置文件
-RUN mkdir -p /app/config && chown app:app /app/config
-# 还
+RUN mkdir -p /app/static /app/dataset /app/config /app/script /app/alembic /app/logs && \
+    chown app:app /app/static /app/dataset /app/config /app/script /app/alembic /app/logs
 
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chown app:app /app/docker-entrypoint.sh
 
 # 暴露端口
 EXPOSE 8000
 
-
-# 切换到 app 用户
+RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
 USER app
 
+
 # 启动命令
-CMD ["./app/start.sh"]
+CMD ["conda", "run", "--no-capture-output", "-n", "app", "bash", "/app/docker-entrypoint.sh"]

@@ -10,10 +10,8 @@ class Looper:
         self.current_count = 0
 
     def increment(self):
-        if self.current_count < self.max_count:
-            self.current_count += 1
-        else:
-            raise ValueError("Maximum loop count exceeded.")
+        self.current_count += 1
+
     
     def break_loop(self):
         """

@@ -28,9 +28,9 @@ class Agent():
         self.state.handle_user_query(query)
         
         while True:
-            check_prompt = self.state.generate_query_for_llm()
+            check_prompt = self.state.generate_history_with_context_and_prompt()
             logger.debug(str(check_prompt))
-            response = self.llm(self.state.generate_query_for_llm())
+            response = self.llm(self.state.generate_history_with_context_and_prompt())
             logger.debug(f"LLM response: {response}")  # 记录 response 内容
 
             self.state.handle_llm_response(response)
@@ -40,9 +40,14 @@ class Agent():
             self.state.looper.increment()
 
             action_name, action_input = self.state.generate_action_input_for_tools()
-            service = self.tools.get_service(action_name)
-            tools_output = str(service(action_input, self.user_info, self.state.generate_query_for_llm()))
-            check_prompt = self.state.generate_query_for_llm()
+            try:
+                service = self.tools.get_service(action_name)
+                tools_output = str(service(action_input, self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
+            except KeyError:
+                logger.error(f"Service '{action_name}' not found in tools registry.")
+                tools_output = f"Service '{action_name}' not found. Please check the service name and try again."
+
+            check_prompt = self.state.generate_history_with_context_and_prompt()
             logger.debug(f"check_prompt: {check_prompt}")
             self.state.handle_observation(tools_output)
 

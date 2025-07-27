@@ -1,0 +1,16 @@
+fastapi==0.116.1
+numpy==1.26.4
+openai==1.97.1
+pandas==2.3.1
+pydantic==2.6.4
+PyJWT==2.10.1
+python_Levenshtein==0.27.1
+PyYAML==6.0.2
+Requests==2.32.4
+scikit_learn==1.7.1
+SQLAlchemy==2.0.41
+starlette==0.47.2
+uvicorn==0.35.0
+alembic==1.14.0
+pymysql==1.1.0
+cryptography==41.0.7

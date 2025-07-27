@@ -15,7 +15,7 @@ class Registry:
         """
         Registers a service instance in the registry.
         :param service_instance: An instance of Tool or its subclass.
-        :raises ValueError: If the service name is already registered.
+        :raises KeyError: If the service name is already registered.
         :raises TypeError: If the service_instance is not an instance of Tool or its subclass.
         """
         
@@ -25,13 +25,13 @@ class Registry:
         
         # tool type guards that the service_instance has a name attribute
         if service_instance.name in self._services:
-            raise ValueError(f"Service '{service_instance.name}' is already registered.")
+            raise KeyError(f"Service '{service_instance.name}' is already registered.")
         
         self._services[service_instance.name] = service_instance
 
     def get_service(self, service_name):
         if service_name not in self._services:
-            raise ValueError(f"Service '{service_name}' is not registered.")
+            raise KeyError(f"Service '{service_name}' is not registered.")
         return self._services[service_name]
 
     def list_services(self) -> list[str]:
