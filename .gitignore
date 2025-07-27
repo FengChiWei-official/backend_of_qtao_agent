@@ -37,7 +37,7 @@ config/alembic.ini
 *.pid
 *.seed
 
-/alembic/
+# /alembic/
 /config/
 
 # ==============================
