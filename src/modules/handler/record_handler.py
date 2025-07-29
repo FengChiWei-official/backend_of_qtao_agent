@@ -24,8 +24,11 @@ router = APIRouter(prefix="/api/v1", tags=["chat"])
 def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager: 'AgentManager' = Depends(get_agent_manager)):
     try:
         user_id = current_user
-        agent = agent_manager.get_agent(user_id, req.session_id)
+        # 开始锁 agent
+        agent = agent_manager._get_agent(user_id, req.session_id)
         answer = agent(req.query)
+
+        # 结束锁 agent
         return BaseResponse(msg="success", data=answer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,4 +1,5 @@
-from .utils import PATH_TO_ROOT
+from src.utils.root_path import get_root_path
+PATH_TO_ROOT = get_root_path()
 import sys
 if str(PATH_TO_ROOT) not in sys.path:
     sys.path.append(str(PATH_TO_ROOT))
@@ -17,7 +18,8 @@ from src.modules.services.service_basis.user_info import UserInfo
 from src.utils.chatgpt import feed_LLM
 
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -134,24 +136,53 @@ class MealService(Tool):
         self.item_names = self.items['food_name'].to_list()
 
     def __call__(self, parameter: dict, user_info: UserInfo, history: list):
-        raw_candidates = self.recommend(user_info, history) #raw_candidates: ['酸辣莲藕', '酸辣土豆丝']
-        print(f'候选物品集为：{raw_candidates}')
-
-        retrieved_items = self.retrieve(raw_candidates) #retrieved_items ['土豆丝', '酸辣土豆丝', '炝土豆丝', '西红柿炒鸡蛋', '凉拌紫甘蓝']
-        print(f'检索结果为：{retrieved_items}')
-
-        judge_result = self.judge(raw_candidates, retrieved_items) #judge_result {'酸辣莲藕': None}
-        print(f'连接结果为：{judge_result}')
-
+        import time
+        start_time = time.time()
+        try:
+            t0 = time.time()
+            logger.info("[MealService] Start recommendation call.")
+            raw_candidates = self.recommend(user_info, history)
+            t1 = time.time()
+            logger.info(f"[MealService] recommend耗时: {t1-t0:.3f}s, raw_candidates: {raw_candidates}")
+        except Exception as e:
+            logger.error(f"[MealService] Error in recommend: {e}", exc_info=True)
+            raise
+        try:
+            t2 = time.time()
+            retrieved_items = self.retrieve(raw_candidates)
+            t3 = time.time()
+            logger.info(f"[MealService] retrieve耗时: {t3-t2:.3f}s, retrieved_items: {retrieved_items}")
+        except Exception as e:
+            logger.error(f"[MealService] Error in retrieve: {e}", exc_info=True)
+            raise
+        try:
+            t4 = time.time()
+            judge_result = self.judge(raw_candidates, retrieved_items)
+            t5 = time.time()
+            logger.info(f"[MealService] judge耗时: {t5-t4:.3f}s, judge_result: {judge_result}")
+        except Exception as e:
+            logger.error(f"[MealService] Error in judge: {e}", exc_info=True)
+            raise
         recommended_list = []
+        t6 = time.time()
         for raw_candidate, linked_item in judge_result.items():
             if linked_item is not None:
                 recommended_list.append(linked_item)
-            else:   # To-Improve：可以同时为多个物品编码
-                unmatched_item = self.encode(raw_candidate) #{'饮食类型': 2, '菜系': 0, '中西餐': 1, '不辣': 0, '微辣': 1, '中辣': 1, '特辣': 1, '价格': [5, 15], '北京': 4, '天津': 4, '河北': 4, '山西': 3, '内蒙古': 3, '辽宁': 3, '吉林': 3, '黑龙江': 3, '上海': 4, '江苏': 4, '浙江': 4, '安徽': 4, '福建': 4, '江西': 4, '山东': 3, '河南': 4, '湖北': 4, '湖南': 4, '广东': 4, '广西': 4, '海南': 3, '重庆': 4, '四川': 4, '广州': 4, '云南': 4, '西藏': 3, '陕西': 3, '甘肃': 3, '青海': 3, '宁夏': 3, '新疆': 3, '儿童': 3, '青年': 4, '成年人': 4, '中年人': 4, '老年人': 3, '早餐': 2, '午餐': 4, '晚餐': 4, '下午茶': 3, '夜宵': 2, '男': 4, '女': 4, '春': 4, '夏': 4, '秋': 4, '冬': 3}# self.encode(raw_candidate)
-                match = self.KNN(unmatched_item)
-                recommended_list.append({'food_id':match['id'], 'food_name':match['food_name']})
-        print(f'最终推荐列表为：{recommended_list}')
+            else:
+                try:
+                    encode_start = time.time()
+                    unmatched_item = self.encode(raw_candidate)
+                    encode_end = time.time()
+                    knn_start = time.time()
+                    match = self.KNN(unmatched_item)
+                    knn_end = time.time()
+                    recommended_list.append({'food_id': match['id'], 'food_name': match['food_name']})
+                    logger.info(f"[MealService] encode耗时: {encode_end-encode_start:.3f}s, KNN耗时: {knn_end-knn_start:.3f}s, candidate: {raw_candidate}")
+                except Exception as e:
+                    logger.error(f"[MealService] Error in encode/KNN for {raw_candidate}: {e}", exc_info=True)
+        t7 = time.time()
+        logger.info(f"[MealService] recommended_list: {recommended_list}")
+        logger.info(f"[MealService] Timing: recommend={t1-t0:.3f}s, retrieve={t3-t2:.3f}s, judge={t5-t4:.3f}s, encode+KNN={t7-t6:.3f}s, total={t7-start_time:.3f}s")
         return recommended_list
 
     def recommend(self, user_info: UserInfo, history: list):
@@ -178,7 +209,7 @@ class MealService(Tool):
             for idx in top3_idx[:5]:
                 retrieved_items.append({'food_id': self.items.iloc[idx]['id'],'food_name':self.item_names[idx]})
         df = pd.DataFrame(retrieved_items)
-        # print(df)
+
         df = df.drop_duplicates(subset='food_name')
         retrieved_items = df.to_dict(orient='records')
 
@@ -208,9 +239,9 @@ class MealService(Tool):
         completion = feed_LLM(prompt)
         result = ''
         for chunk in completion:
-            #print(chunk.choices[0].delta.content)
+
             result += chunk.choices[0].delta.content
-        print(result)
+
         match = re.search(r'```json\s*(\{.*\})\s*```', result, re.DOTALL)
         if match:
             query = json.loads(match.group(1))
@@ -289,18 +320,15 @@ class MealService(Tool):
                 (self.items['price'] >= query['价格'][0]) & (self.items['price'] <= query['价格'][1])]
         else:
             filtered_items = self.items
-        print("Filtered items shape:", filtered_items.shape)
-        #print(filtered_items)
 
         indexes = (query['饮食类型'], query['菜系'], query['中西餐'])
-        filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])| # To-Improve：怎么编码和匹配辣度更合适？（0, 1, 0, 0匹配出凉粉）
+        filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])|
                                         (filtered_items['slightly-spicy']==query['微辣'])|
                                         (filtered_items['medium-spicy']==query['中辣'])|
                                         (filtered_items['extra-spicy']==query['特辣'])]
         filtered_items = filtered_items.sort_index()
         filtered_items = filtered_items.loc[indexes]
-        # print(filtered_items.shape)
-        # print(filtered_items)
+
         # vectors = filtered_items[soft_constraints].to_numpy()
         vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
         # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
@@ -324,13 +352,16 @@ class MealService(Tool):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
+
+    logging.info("Starting meal service")
     meal_service = MealService()
 
     # user_info = {"出生地":"上海", "性别":"男", "年龄":"19", "当前日期": "2025-5-11"}
     user_info = UserInfo(user_id="362531200504090911", ticket_info={})
-    history = [{'role':'user', 'content':'我想吃点脆脆的蔬菜，酸辣口味的，你有什么推荐的吗？'}, {'role':'assistant', 'content':'Thought:'}]
+    history = [{'role':'user', 'content':'我想吃点粤菜，你有什么推荐的吗？'}, {'role':'assistant', 'content':'Thought:'}]
 
     start = time.time()
     meal_service({}, user_info, history)
     end = time.time()
-    print(f'耗时：{end-start}')
+    logger.info(f'耗时：{end-start}')

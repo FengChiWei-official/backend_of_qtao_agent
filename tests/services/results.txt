@@ -1,0 +1,12 @@
+FactoryRegistry total time: 98.63s
+Registry total time: 137.55s
+Factory results: [([{'food_id': '4_10_8', 'food_name': '宫保鸡丁'}, {'food_id': '22_13_7', 'food_name': '红烧青蛙'}, {'food_id': '7_2_10', 'food_name': '麻婆豆腐'}], 83.62713384628296), ([{'food_id': '4_10_8', 'food_name': '宫保鸡丁'}, {'food_id': '5_12_1', 'food_name': '老坛开胃鸡'}, {'food_id': '7_2_10', 'food_name': '麻婆豆腐'}], 98.61431574821472)]
+Registry results: [([{'food_id': '10_17_4', 'food_name': '虾饺'}, {'food_id': '15_10_2', 'food_name': '白切鸡'}, {'food_id': '22_11_2', 'food_name': '蟹脚'}], 89.28439164161682), ([{'food_id': '15_10_2', 'food_name': '白切鸡'}, {'food_id': '15_4_4', 'food_name': '白灼河虾'}, {'food_id': '22_11_2', 'food_name': '蟹脚'}], 137.54644441604614)]
+Registry results: 1753687646.31s
+Factory results: 1753687508.77s
+FactoryRegistry total time: 95.74s
+Registry total time: 112.08s
+Factory results: [([{'food_id': '7_2_10', 'food_name': '麻婆豆腐'}, {'food_id': '4_4_1', 'food_name': '民国辣子鸡'}, {'food_id': '4_10_8', 'food_name': '宫保鸡丁'}], 86.44086790084839), ([{'food_id': '4_10_8', 'food_name': '宫保鸡丁'}, {'food_id': '7_2_10', 'food_name': '麻婆豆腐'}], 95.71637201309204)]
+Registry results: [([{'food_id': '15_10_2', 'food_name': '白切鸡'}, {'food_id': '12_1_6', 'food_name': '蜜汁叉烧'}, {'food_id': '22_14_9', 'food_name': '胡椒猪肚鸡汤'}], 78.97151613235474), ([{'food_id': '10_17_5', 'food_name': '清远白切鸡'}, {'food_id': '22_11_2', 'food_name': '蟹脚'}, {'food_id': '10_17_4', 'food_name': '虾饺'}], 112.0786612033844)]
+Registry results: 1753688723.17s
+Factory results: 1753688611.09s

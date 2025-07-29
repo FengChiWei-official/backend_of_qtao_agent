@@ -4,7 +4,8 @@ from src.utils.root_path import get_root_path
 import sys
 if str(get_root_path()) not in sys.path:
     sys.path.append(str(get_root_path()))
-    
+import threading
+
 from src.modules.services.business.record_bussiness import DialogueRecordBusiness  # 修正import路径
 from src.utils.chatgpt import feed_LLM_full, gather_llm_output
 from src.modules.services.service_basis.ToolRegistry import Registry
@@ -23,6 +24,7 @@ class Agent():
         self.llm = gather_llm_output(feed_LLM_full)
         self.tools = tools
         self.user_info = UserInfo(user_id=user_id, ticket_info={})
+        self.lock = threading.Lock()
 
     def __call__(self, query: str) -> dict:
         self.state.handle_user_query(query)

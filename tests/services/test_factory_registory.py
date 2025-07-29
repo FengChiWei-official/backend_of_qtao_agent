@@ -75,13 +75,13 @@ def test_concurrent_get():
     registry.register(ConcurrentDummyTool, "concurrent_dummy", "concurrent desc")
     assert "concurrent_dummy" in registry.list_services()
     tool1 = registry.get_service("concurrent_dummy", "concurrent_dummy",  "desc","1")
-    tool2 = registry.get_service("concurrent_dummy", "concurrent_dummy", ""desc, "2")
+    tool2 = registry.get_service("concurrent_dummy", "concurrent_dummy", "desc", "2")
     assert isinstance(tool1, ConcurrentDummyTool)
     assert isinstance(tool2, ConcurrentDummyTool)
     assert tool1.name == "concurrent_dummy"
     assert tool2.name == "concurrent_dummy"
-    assert tool1.description == "concurrent desc"
-    assert tool2.description == "concurrent desc"
+    assert tool1.description == "desc"
+    assert tool2.description == "desc"
     
     # 创建并发环境
     # 这里可以使用多线程或异步来测试并发调用
@@ -97,19 +97,35 @@ def test_concurrent_get():
     for t in threads:
         t.join()
     # 确认并发调用没有问题
-    assert tool1() == "concurrent1 ok"
-    assert tool2() == "concurrent2 ok"
+    assert tool1(**dummy_arg) == "concurrent1 ok"
+    assert tool2(**dummy_arg) == "concurrent2 ok"
 
 from src.modules.services.service_basis.ToolRegistry import Registry
 from src.modules.services.service_basis.meal_service import MealService
 import time
 
+
+
+
+
+test_param = {
+    "parameter": {},
+    "user_info": UserInfo("362531200504090911"),
+    "history": [{"role": "user", "content": "推荐一个粤菜?"}],
+}
+test_param_f = {
+    "parameter": {},
+    "user_info": UserInfo("362531200504090911"),
+    "history": [{"role": "user", "content": "推荐一个川菜?"}],
+}
+
 def test_concurrent_execution():
+
     f_registry = FactoryRegistry()
     f_registry.register(MealService, "meal_service", "A service for meal-related tasks")
 
     registry = Registry()
-    registry.register(MealService())
+    registry.register(MealService("meal_service", "A service for meal-related tasks"))
     assert "meal_service" in registry.list_services()
 
     def execute_service(ins, *args, **kwargs):
@@ -121,11 +137,11 @@ def test_concurrent_execution():
         return result, duration
 
     import concurrent.futures
-    n = 5
+    n = 2
     # FactoryRegistry 并发
     start_factory = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
-        futures = [executor.submit(execute_service, f_registry.get_service("meal_service")) for _ in range(n)]
+        futures = [executor.submit(execute_service, f_registry.get_service("meal_service"), **test_param_f) for _ in range(n)]
         factory_results = [future.result() for future in concurrent.futures.as_completed(futures)]
     end_factory = time.time()
     factory_total = end_factory - start_factory
@@ -137,7 +153,7 @@ def test_concurrent_execution():
     start_singleton = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
         singleton_instance = registry.get_service("meal_service")
-        futures = [executor.submit(execute_service, singleton_instance) for _ in range(n)]
+        futures = [executor.submit(execute_service, singleton_instance, **test_param) for _ in range(n)]
         singleton_results = [future.result() for future in concurrent.futures.as_completed(futures)]
     end_singleton = time.time()
     singleton_total = end_singleton - start_singleton
@@ -148,5 +164,15 @@ def test_concurrent_execution():
     # 可选：断言两者的总耗时或平均耗时差异
     assert factory_total <= singleton_total
 
+    with open("./results.txt", "a") as f:
+        f.write(f"FactoryRegistry total time: {factory_total:.2f}s\n")
+        f.write(f"Registry total time: {singleton_total:.2f}s\n")
+        f.write(f"Factory results: {factory_results}\n")
+        f.write(f"Registry results: {singleton_results}\n")
+        f.write(f"Registry results: {end_singleton:.2f}s\n")
+        f.write(f"Factory results: {end_factory:.2f}s\n")
+
+
 if __name__ == "__main__":
-    pytest.main([__file__])
+    # pytest.main(["-v", __file__])
+    test_concurrent_execution()
