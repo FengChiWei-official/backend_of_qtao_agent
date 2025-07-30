@@ -25,8 +25,8 @@ def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager
     try:
         user_id = current_user
         # 开始锁 agent
-        agent = agent_manager._get_agent(user_id, req.session_id)
-        answer = agent(req.query)
+        agent = agent_manager.get_and_use_agent(user_id, req.session_id, req.query)
+
 
         # 结束锁 agent
         return BaseResponse(msg="success", data=answer)

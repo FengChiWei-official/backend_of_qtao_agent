@@ -117,10 +117,18 @@ class State:
             user_id=self.__user_id,
             user_query=self.__query,
             system_response=self.__final_answer.get("answer", ""),
-            system_thoughts=json.dumps(self.__context),
+            system_thoughts=self.__load_dumped_context(),
             image_list=self.__final_answer.get("picture", []),
         )
 
+    def __load_dumped_context(self) -> str:
+        """
+        加载已保存的对话上下文
+        :return: 对话上下文字符串
+        """
+        # 这里可以实现从文件或数据库加载已保存的上下文
+        # 目前返回一个空字符串作为示例
+        return json.dumps(self.__context, ensure_ascii=False, indent=4)
     
     def __start_context(self):
         """
@@ -329,7 +337,7 @@ class State:
         #todo: redefine finalans
         ans = {
             "system_response": self.__final_answer.get("answer", ""),
-            "system_thoughts": json.dumps(self.__context),
+            "system_thoughts": self.__load_dumped_context(),
             "image_list": self.__final_answer.get("picture", [])
         }
 
