@@ -11,6 +11,7 @@ from starlette.staticfiles import StaticFiles
 from src.modules.handler.user_handler import get_user_business as handler_get_user_business
 from src.modules.handler.conversation_handler import get_conversation_business as handler_get_conversation_business
 from src.modules.handler.record_handler import get_agent_manager as handler_get_agent_manager
+from src.modules.handler.record_handler import check_ownership_function_generator as handle_check_ownership_function_generator
 from src.modules.handler.conversation_handler import get_record_business as handler_get_record_business
 from src.utils.auth_dependency import get_current_user as auth_get_current_user
 import traceback
@@ -37,6 +38,8 @@ def get_record_business():
 def get_agent_manager():
     return agent_manager_instance
 
+def check_ownership_function_generator():
+    return user_business_instance.check_conversation_ownership
 
 
 
@@ -123,6 +126,7 @@ app.dependency_overrides[handler_get_user_business] = lambda: user_business_inst
 app.dependency_overrides[handler_get_conversation_business] = lambda: conversation_business_instance
 app.dependency_overrides[handler_get_record_business] = lambda: record_business_instance
 app.dependency_overrides[handler_get_agent_manager] = lambda: agent_manager_instance
+app.dependency_overrides[handle_check_ownership_function_generator] = lambda: check_ownership_function_generator
 # 其他路由和中间件配置
 app.add_middleware(
     CORSMiddleware,

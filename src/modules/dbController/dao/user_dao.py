@@ -170,3 +170,26 @@ class UserDAO:
             logger.error(f"User already marked as removed: {e}")
             raise
 
+    def check_user_ownership(self, user_id: str, conversation_id: str) -> bool:
+        """
+        检查用户是否拥有指定会话
+        :param user_id: 用户ID
+        :param conversation_id: 会话ID
+        :return: 如果用户拥有该会话则返回 True，否则返回 False
+        :raises LookupError: 如果用户不存在
+        :raises ValueError: 如果用户已被软删除
+        """
+        with self.__db_session_manager.get_session() as session:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                logger.warning(f"User with ID {user_id} not found or is marked as removed.")
+                raise LookupError(f"User with ID {user_id} not found.")
+            if user.is_removed:
+                logger.warning(f"User with ID {user_id} is marked as removed.")
+                raise ValueError(f"User with ID {user_id} is marked as removed.")
+            conversation = session.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user_id, Conversation.is_removed == False).first()
+            if not conversation:
+                logger.warning(f"Conversation with ID {conversation_id} not found for user {user_id}.")
+                return False
+            logger.info(f"User {user_id} owns conversation {conversation_id}.")
+            return True

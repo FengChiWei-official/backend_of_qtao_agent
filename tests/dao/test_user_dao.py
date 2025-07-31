@@ -4,6 +4,8 @@ import copy  # 添加深拷贝支持
 from src.modules.dbController.models.user import User
 from src.modules.dbController.basis.dbSession import DatabaseSessionManager as DM
 from src.modules.dbController.dao.user_dao import UserDAO
+from src.modules.dbController.models.conversation import Conversation
+from src.modules.dbController.dao.conversation_dao import ConversationDAO
 from config.loadConfig import ConfigLoader
 
 PATH_TO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -12,10 +14,11 @@ class TestUserDAO(unittest.TestCase):
     def setUp(self):
         self.config = ConfigLoader(os.path.join(PATH_TO_ROOT, "config", "config.yaml"))
         self.db_session_manager = DM(self.config.get_db_config())
-        self.user_dao = UserDAO(self.db_session_manager)
+        self.user_dao = UserDAO(self.config.get_db_config())
         self.test_user = User(username="testuser233", id="233333", password_hash="dummyhash", email="testuser@example.com")
         self.conflict_user = User(username="conflictuser", id="444444", password_hash="conflicthash", email="conflictuser@example.com")
 
+        self.conversation_dao = ConversationDAO(self.config.get_db_config())  # Assuming you have a conversation DAO, initialize it here if needed
     def test_create_user(self):
         # Ensure user does not exist
         try:
@@ -164,6 +167,33 @@ class TestUserDAO(unittest.TestCase):
         # Robustness: Try to soft delete again
         with self.assertRaises(ValueError):
             self.user_dao.delete_user(user.id, is_hard_delete=False)  
+    
+    def test_check_ownership(self):
+        # Ensure user exists and is not soft-deleted
+        try:
+            self.user_dao.delete_user(self.test_user.id, is_hard_delete=True)
+        except Exception:
+            pass
+        user = self.user_dao.create_user(copy.deepcopy(self.test_user))
+        conv = self.conversation_dao.create_conversation(
+            Conversation(
+                id="test_conversation",
+                user_id=user.id,
+                title="Test Conversation",
+                is_removed=False
+            )
+        )
+
+
+        
+        # Check ownership
+        self.assertTrue(self.user_dao.check_user_ownership(user.id, conv.id))
+        self.assertFalse(self.user_dao.check_user_ownership(user.id, "nonexistentid"))
+        
+        # Soft delete user and check ownership
+        self.user_dao.delete_user(user.id, is_hard_delete=False)
+        with self.assertRaises(ValueError):
+            self.user_dao.check_user_ownership(user.id, user.id)
 
 if __name__ == "__main__":
     unittest.main()

@@ -111,3 +111,13 @@ class UserBusiness:
         
         """
         self.user_dao.delete_user(user_id, is_hard_delete)
+
+
+    def check_conversation_ownership(self, user_id: str, conversation_id: str) -> bool:
+        """
+        检查用户是否拥有指定会话
+        :param user_id: 用户 ID
+        :param conversation_id: 会话 ID
+        :return: 如果用户拥有该会话则返回 True，否则返回 False
+        """
+        return self.user_dao.check_user_ownership(user_id, conversation_id)
