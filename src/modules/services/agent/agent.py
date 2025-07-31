@@ -14,6 +14,8 @@ from src.modules.services.service_basis.user_info import UserInfo
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime
+
 class Agent():
     """
     Agent类用于处理对话状态和上下文管理。
@@ -27,7 +29,9 @@ class Agent():
         self.lock = threading.Lock()
 
     def __call__(self, query: str) -> dict:
+        query_sent_at = datetime.now()
         self.state.handle_user_query(query)
+        
         
         while True:
             check_prompt = self.state.generate_history_with_context_and_prompt()

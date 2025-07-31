@@ -77,6 +77,7 @@ class State:
         self.__loop_break = False
 
         self.__query = ""
+        self.__query_sent_at = None
         self.__prompt_template = prompt_template
         self.__tools_description = tools_description
         self.__tools_names = tools_names
@@ -116,9 +117,11 @@ class State:
             conversation_id=self.__conversation_id,
             user_id=self.__user_id,
             user_query=self.__query,
+            query_sent_at=self.__query_sent_at,
             system_response=self.__final_answer.get("answer", ""),
             system_thoughts=self.__load_dumped_context(),
             image_list=self.__final_answer.get("picture", []),
+            response_received_at=datetime.datetime.now().isoformat()
         )
 
     def __load_dumped_context(self) -> str:
@@ -253,6 +256,7 @@ class State:
         启动对话上下文
         """
         self.__query = query
+        self.__query_sent_at= datetime.datetime.now()
         # todo： 应该加一个锁， 如果已经有上下文了，就不再启动新的上下文
         self.__context = []  # 清空上下文
     
@@ -286,6 +290,7 @@ class State:
         :param user_query: 用户查询字符串
         """
         self._start_context(query=user_query)
+        
         self.looper.reset()
 
 
