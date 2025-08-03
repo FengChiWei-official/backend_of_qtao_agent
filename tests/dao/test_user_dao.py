@@ -179,7 +179,7 @@ class TestUserDAO(unittest.TestCase):
             Conversation(
                 id="test_conversation",
                 user_id=user.id,
-                title="Test Conversation",
+                session_name="Test Conversation",
                 is_removed=False
             )
         )

@@ -26,17 +26,7 @@ logger = logging.getLogger(__name__)
 logger.info("Starting the application...")
 app = FastAPI()
 
-def get_user_business():
-    return user_business_instance
 
-def get_conversation_business():
-    return conversation_business_instance
-
-def get_record_business():
-    return record_business_instance
-
-def get_agent_manager():
-    return agent_manager_instance
 
 def check_ownership_function_generator():
     return user_business_instance.check_conversation_ownership
@@ -126,7 +116,7 @@ app.dependency_overrides[handler_get_user_business] = lambda: user_business_inst
 app.dependency_overrides[handler_get_conversation_business] = lambda: conversation_business_instance
 app.dependency_overrides[handler_get_record_business] = lambda: record_business_instance
 app.dependency_overrides[handler_get_agent_manager] = lambda: agent_manager_instance
-app.dependency_overrides[handle_check_ownership_function_generator] = lambda: check_ownership_function_generator
+app.dependency_overrides[handle_check_ownership_function_generator] = check_ownership_function_generator
 # 其他路由和中间件配置
 app.add_middleware(
     CORSMiddleware,

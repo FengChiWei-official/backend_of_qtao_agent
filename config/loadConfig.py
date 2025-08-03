@@ -10,7 +10,13 @@ class ConfigLoader:
         path = Path(path_to_config_file)
         with open(path_to_config_file, 'r') as file:
             self.config = yaml.safe_load(file)
-        
+
+    def get_config(self) -> dict:
+        """
+        获取完整配置
+        :return: 完整配置字典
+        """
+        return self.config        
 
     def get_db_config(self) -> dict:
         """
@@ -39,12 +45,13 @@ class ConfigLoader:
         :return: 服务器配置字典
         """
         return self.config.get("server", {})
-    def get_config(self) -> dict:
+    
+    def get_llm_config(self) -> dict:
         """
-        获取完整配置
-        :return: 完整配置字典
+        获取大模型配置
+        :return: 大模型配置字典
         """
-        return self.config
+        return self.config.get("llm", {})
 
 default_config = {
     "db_type": "mysql",

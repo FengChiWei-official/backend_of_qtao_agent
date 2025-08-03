@@ -1,6 +1,13 @@
 from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam
 from typing import Iterable, Callable, Any
+from src.utils.root_path import get_root_path
+from config.loadConfig import ConfigLoader
+
+PATH_TO_ROOT = get_root_path()
+PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
+config_loader = ConfigLoader(PATH_TO_CONFIG)
+
 
 def feed_LLM_full(history: list) -> Iterable:
     """
@@ -9,17 +16,22 @@ def feed_LLM_full(history: list) -> Iterable:
     :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
     """
     client = OpenAI(
-        api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",
-        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        api_key=config_loader.get_llm_config().get("api_key"),
+        base_url=config_loader.get_llm_config().get("base_url"),
     )
     messages = [ChatCompletionUserMessageParam(role=msg["role"], content=msg["content"]) for msg in history]
-    completion = client.chat.completions.create(
-        model="qwen-max",
-        messages=messages,
-        stop="Observation",
-        stream=True,
-        stream_options={"include_usage": False}
-    )
+    llm_config = config_loader.get_llm_config()
+    model = llm_config.get("model") or "qwen3-235b-a22b-instruct-2507"
+    stop = llm_config.get("stop")
+    create_kwargs = {
+        "model": model,
+        "messages": messages,
+        "stream": True,
+        "stream_options": {"include_usage": False}
+    }
+    if stop is not None:
+        create_kwargs["stop"] = stop
+    completion = client.chat.completions.create(**create_kwargs)
     return completion
 
 def feed_LLM(prompt: str) -> Iterable:
@@ -29,14 +41,14 @@ def feed_LLM(prompt: str) -> Iterable:
         :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
         """
         client = OpenAI(
-            api_key="sk-8f86f5e9b0b34e8a9e7319e68f99787e",
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            api_key=config_loader.get_llm_config().get("api_key"),
+            base_url=config_loader.get_llm_config().get("base_url"),
         )
         messages = [ChatCompletionUserMessageParam(role="user", content=prompt)]
         completion = client.chat.completions.create(
-            model="qwen-max",
+            model=config_loader.get_llm_config().get("model") or "qwen3-235b-a22b-instruct-2507",
             messages=messages,
-            stop="Observation",
+            stop=config_loader.get_llm_config().get("stop"),
             stream=True,
             stream_options={"include_usage": False}
         )

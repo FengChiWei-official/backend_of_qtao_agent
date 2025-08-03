@@ -22,11 +22,10 @@ class ChatRequest(BaseModel):
     query: str = Field(..., description="用户查询内容")
 
 @router.post("/chat", summary="会话对话", response_model=BaseResponse)
-def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager: 'AgentManager' = Depends(get_agent_manager), ownership_checker_generator = Depends(check_ownership_function_generator)):
+def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager: 'AgentManager' = Depends(get_agent_manager), ownership_checker = Depends(check_ownership_function_generator)):
     try:
         user_id = current_user
         # user 一定要拥有session
-        ownership_checker = ownership_checker_generator()
         if not ownership_checker(user_id, req.session_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="没有权限访问该会话")
         # 开始锁 agent
