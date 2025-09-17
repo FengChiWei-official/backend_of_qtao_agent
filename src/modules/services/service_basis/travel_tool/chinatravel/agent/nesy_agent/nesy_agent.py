@@ -307,6 +307,8 @@ class NesyAgent(BaseAgent):
     def add_intercity_transport(
         self, activities, intercity_info, innercity_transports=[], tickets=1
     ):
+        if tickets is None:
+            tickets = 1
         activity_i = {
             "start_time": intercity_info["BeginTime"],
             "end_time": intercity_info["EndTime"],
@@ -623,6 +625,10 @@ class NesyAgent(BaseAgent):
         ### check constraints
         pass_num_list = np.zeros(len(back_info))
 
+        days = query.get("days")
+        if days is None:
+            days = 1
+
         for back_i in ranking_back:
 
             back_sel = back_info.iloc[back_i]
@@ -633,8 +639,8 @@ class NesyAgent(BaseAgent):
                 innercity_transports=[],
                 tickets=self.query["people_number"],
             )
-            if query["days"] > 1:
-                for dayy in range(1, query["days"]):
+            if days > 1:
+                for dayy in range(1, days):
                     tmp_plan.append({"day": dayy + 1, "activities": []})
             tmp_plan[-1]["activities"] = self.add_intercity_transport(
                 tmp_plan[-1]["activities"],
@@ -683,17 +689,25 @@ class NesyAgent(BaseAgent):
         pass_num_list = np.zeros(len(hotel_info))
         ### check constraints
 
+        people_number = query.get("people_number")
+        if people_number is None:
+            people_number = 1
+
+        days = query.get("days")
+        if days is None:
+            days = 1
+
         for idx in range(len(hotel_info)):
             hotel_sel = hotel_info.iloc[idx]
 
             if query_room_number == None:
                 room_type = hotel_sel["numbed"]
-                required_rooms = int((query["people_number"] - 1) / room_type) + 1
+                required_rooms = int((people_number - 1) / room_type) + 1
             else:
                 required_rooms = query_room_number
 
             plan = []
-            for dayy in range(query["days"] - 1):
+            for dayy in range(days - 1):
                 plan.append({"day": dayy + 1, "activities": []})
                 plan = self.add_accommodation(
                     current_plan=plan,
@@ -1492,6 +1506,11 @@ class NesyAgent(BaseAgent):
         return False, plan
 
     def generate_plan_with_search(self, query):
+
+        days = query.get("days")
+        if days is None:
+            days = 1
+        query["days"] = days
 
         source_city = query["start_city"]
         target_city = query["target_city"]

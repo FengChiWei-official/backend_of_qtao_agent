@@ -11,7 +11,7 @@ content-type: application/json
 {
   "username": "shenjie",
   "password": "qwq233383",
-  "id": "310103200411074017",
+  "id": "620923200601197052",
   "answer": "韶关",
   "email": "qwq"
 }
@@ -76,6 +76,15 @@ Authorization: Bearer {{token}}
   "query": "推荐重庆的面馆"
 }
 
+####  Chat Message with Session for New Session
+POST 127.0.0.1:8000/api/v1/chat
+content-type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "session_id": "{{session_id}}",
+  "query": "推荐重庆到上海的旅游方案，预算3万"
+}
 
 #### Get Chat History
 GET 127.0.0.1:8000/api/v1/session/{{session_id}}/history

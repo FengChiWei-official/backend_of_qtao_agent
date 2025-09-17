@@ -3,18 +3,20 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from src.modules import *
 from src.modules.services.service_basis import MealService, TicketQuery, WeatherQuery, TravelPlan
 from src.modules.services.service_basis.ToolRegistry import Registry
 from src.utils import BaseResponse, root_path
 from config import ConfigLoader
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
+from src.modules.services.business import UserBusiness, ConversationBusiness, DialogueRecordBusiness
+from src.modules.services.agent import AgentManager, prompt
 from src.modules.handler.user_handler import get_user_business as handler_get_user_business
 from src.modules.handler.conversation_handler import get_conversation_business as handler_get_conversation_business
 from src.modules.handler.record_handler import get_agent_manager as handler_get_agent_manager
 from src.modules.handler.record_handler import check_ownership_function_generator as handle_check_ownership_function_generator
 from src.modules.handler.conversation_handler import get_record_business as handler_get_record_business
+from src.modules.handler import conversation_router, record_router, user_router
 from src.utils.auth_dependency import get_current_user as auth_get_current_user
 import traceback
 
