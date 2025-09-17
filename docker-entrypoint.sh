@@ -4,4 +4,4 @@ until mysql -h smai_db -uappuser -pappuserpwd -e "select 1" tstDB; do
 done
 export PYTHONPATH=/app
 conda run -n app alembic -c /app/config/alembic.ini upgrade head
-conda run --no-capture-output -n app python ./src/main.py
+conda run --no-capture-output -n app python ./main.py

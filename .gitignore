@@ -37,12 +37,15 @@ config/alembic.ini
 *.sqlite       # 本地数据库文件
 *.pid
 *.seed
+*.error
+cache/
+/tmp/
 
 # /alembic/
 /config/
 
 # ==============================
-# databaset
+# 数据集和静态文件
 # ==============================
 /dataset/
 /static/
@@ -62,3 +65,10 @@ db_backups/
 /.idea/misc.xml
 /.idea/vcs.xml
 /.idea/neo_backend.iml
+
+# ==============================
+# 特定模块的忽略规则
+# ==============================
+# 忽略 chinatravel 工具的数据库、计划和评估数据
+src/modules/services/service_basis/travel_tool/chinatravel/environment/database/
+src/modules/services/service_basis/travel_tool/chinatravel/evaluation/
