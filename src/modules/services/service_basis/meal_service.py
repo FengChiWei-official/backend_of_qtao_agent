@@ -15,6 +15,9 @@ import time
 
 from src.modules.services.service_basis.basis.tool import Tool
 from src.modules.services.service_basis.user_info import UserInfo
+import re
+import json
+from typing import Any
 from src.utils.chatgpt import feed_LLM
 
 
@@ -222,10 +225,29 @@ class MealService(Tool):
         completion = ''
         for chunk in completion_generator:
             completion += chunk.choices[0].delta.content
-        match = re.search(r'\s*(\{.*\})\s*', completion, re.DOTALL)
-        if not match:
-            raise ValueError("No dictionary block found in LLM response.")
-        judge_result = eval(match.group(1))
+        
+        try:
+            # 找到第一个 '{' 和最后一个 '}' 来确定JSON对象的范围
+            start_index = completion.find('{')
+            end_index = completion.rfind('}')
+            if start_index == -1 or end_index == -1 or start_index >= end_index:
+                raise ValueError("No valid JSON object boundaries found in LLM response.")
+
+            # 提取括号内的核心字符串
+            json_str = completion[start_index : end_index + 1]
+            
+            # 使用更安全的 json.loads 解析
+            judge_result = json.loads(json_str)
+        except (json.JSONDecodeError, ValueError) as e:
+            # 如果直接解析失败，则认为可能包含了注释等额外字符，并尝试清理
+            # 这个正则表达式会移除所有不在双引号内的、非法的JSON字符（如全角括号）
+            cleaned_str = re.sub(r'(?s)"[^"]*"(*SKIP)(*FAIL)|[^\w\s.,{}:"\[\]-]', '', json_str)
+            try:
+                judge_result = json.loads(cleaned_str)
+            except json.JSONDecodeError:
+                # 如果清理后仍然失败，则抛出最终异常
+                raise ValueError(f"Failed to decode JSON from LLM response after cleaning. Original string: '{json_str}'. Error: {e}")
+
         for key, val in judge_result.items():
             if val is not None:
                 for item in retrieved_items:
