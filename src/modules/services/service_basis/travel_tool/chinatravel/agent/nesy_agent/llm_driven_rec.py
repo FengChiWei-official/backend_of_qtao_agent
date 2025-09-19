@@ -57,7 +57,9 @@ class LLMDrivenAgent(NesyAgent):
         self.llm_rec_count += 1
 
         print(answer)
+        # former code is:
         match = re.search(r'IDList:\s*(\[[^\]]+\])', answer)
+    
         # if match:
         try:
             intercity_transport_list = eval(match.group(1))
