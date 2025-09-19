@@ -36,7 +36,7 @@ class HistoryResponse(BaseModel):
 
 
 
-router = APIRouter(prefix="/api/v1", tags=["conversation"])
+conversation_router = APIRouter(prefix="/api/v1", tags=["conversation"])
 
 
 
@@ -44,7 +44,7 @@ router = APIRouter(prefix="/api/v1", tags=["conversation"])
 
 
 
-@router.post("/session", summary="创建新会话", response_model=BaseResponse)
+@conversation_router.post("/session", summary="创建新会话", response_model=BaseResponse)
 def create_session(req: CreateSessionRequest, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         user_id = current_user
@@ -92,7 +92,7 @@ def create_session(req: CreateSessionRequest, current_user=Depends(get_current_u
             }
         )
 
-@router.get("/session/{session_id}", summary="获取会话详情", response_model=BaseResponse)
+@conversation_router.get("/session/{session_id}", summary="获取会话详情", response_model=BaseResponse)
 def get_session(session_id: str, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         session = conversation_business.get_conversation(session_id)
@@ -118,7 +118,7 @@ def get_session(session_id: str, current_user=Depends(get_current_user), convers
             }
         )
 
-@router.get("/sessions", summary="列出所有会话", response_model=BaseResponse)
+@conversation_router.get("/sessions", summary="列出所有会话", response_model=BaseResponse)
 def list_sessions(current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         user_id = current_user  # 修正为直接取字符串
@@ -145,7 +145,7 @@ def list_sessions(current_user=Depends(get_current_user), conversation_business:
             }
         )
 
-@router.put("/session/{session_id}/name", summary="更新会话名称", response_model=BaseResponse)
+@conversation_router.put("/session/{session_id}/name", summary="更新会话名称", response_model=BaseResponse)
 def update_session_name(session_id: str, req: UpdateSessionNameRequest, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         session = conversation_business.update_conversation(session_id, req.name)
@@ -181,7 +181,7 @@ def update_session_name(session_id: str, req: UpdateSessionNameRequest, current_
             }
         )
 
-@router.delete("/session/{session_id}", summary="删除会话", response_model=BaseResponse)
+@conversation_router.delete("/session/{session_id}", summary="删除会话", response_model=BaseResponse)
 def delete_session(session_id: str, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business)):
     try:
         conversation_business.delete_conversation(session_id)
@@ -207,7 +207,7 @@ def delete_session(session_id: str, current_user=Depends(get_current_user), conv
             }
         )
 
-@router.get("/session/{session_id}/history", summary="获取会话历史", response_model=BaseResponse)
+@conversation_router.get("/session/{session_id}/history", summary="获取会话历史", response_model=BaseResponse)
 def get_session_history(session_id: str, current_user=Depends(get_current_user), conversation_business: 'ConversationBusiness' = Depends(get_conversation_business), record_business: 'DialogueRecordBusiness' = Depends(get_record_business)):
     try:
         records = record_business.list_records_by_conversation(session_id)

@@ -15,13 +15,13 @@ def check_ownership_function_generator(user_id: str, session_id: str) -> bool:
     raise NotImplementedError("请在 main.py 中通过 Depends 覆盖此依赖")
 
 
-router = APIRouter(prefix="/api/v1", tags=["chat"])
+record_router = APIRouter(prefix="/api/v1", tags=["chat"])
 
 class ChatRequest(BaseModel):
     session_id: str = Field(..., description="会话ID")
     query: str = Field(..., description="用户查询内容")
 
-@router.post("/chat", summary="会话对话", response_model=BaseResponse)
+@record_router.post("/chat", summary="会话对话", response_model=BaseResponse)
 def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager: 'AgentManager' = Depends(get_agent_manager), ownership_checker = Depends(check_ownership_function_generator)):
     try:
         user_id = current_user
