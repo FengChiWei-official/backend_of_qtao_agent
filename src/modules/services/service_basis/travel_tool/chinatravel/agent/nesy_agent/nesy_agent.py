@@ -69,7 +69,7 @@ class NesyAgent(BaseAgent):
             os.makedirs(cache_dir)
         self.cache_dir = cache_dir
 
-        self.least_plan_schema, self.least_plan_comm, self.least_plan_logic = None, None, None
+        self.least_plan_schema, self.least_plan_comm = None, None
         self.method = kwargs["method"]
 
         print("cache dir:", self.cache_dir)
@@ -180,7 +180,7 @@ class NesyAgent(BaseAgent):
 
         plan_out["input_token_count"] = self.backbone_llm.input_token_count
         plan_out["output_token_count"] = self.backbone_llm.output_token_count
-        plan_out["input_token_maxx"] = self.backbone.llm.input_token_maxx
+        plan_out["input_token_maxx"] = self.backbone_llm.input_token_maxx
 
         plan_out["llm_rec_count"] = self.llm_rec_count
         plan_out["llm_rec_format_error_count"] = self.llm_rec_format_error
@@ -570,8 +570,7 @@ class NesyAgent(BaseAgent):
     def reranking_intercity_transport_go_with_constraints(
         self, ranking_go, go_info, query
     ):
-        if go_info.empty:
-            return []
+
         ### check constraints
         pass_num_list = np.zeros(len(go_info))
 
@@ -622,8 +621,7 @@ class NesyAgent(BaseAgent):
     def reranking_intercity_transport_back_with_constraints(
         self, ranking_back, back_info, query, go_sel
     ):
-        if back_info.empty:
-            return []
+
         ### check constraints
         pass_num_list = np.zeros(len(back_info))
 

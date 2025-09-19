@@ -271,67 +271,7 @@ class MealService(Tool):
         else:
             raise ValueError("No JSON block found in LLM response.")
 
-    
-    def KNN(self, query: dict) -> pd.Series:
-        for attr in ['饮食类型', '菜系', '中西餐']:
-            if query[attr] == 0:
-                query[attr] = slice(None)
-        price_range = query.get('价格', '未加限定')
-        if price_range != '未加限定' and isinstance(price_range, list) and len(price_range) == 2:
-            filtered_items = self.items[
-                (self.items['price'] >= query['价格'][0]) & (self.items['price'] <= query['价格'][1])]
-        else:
-            filtered_items = self.items
-
-        indexes = (query['饮食类型'], query['菜系'], query['中西餐'])
-        filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])|
-                                        (filtered_items['slightly-spicy']==query['微辣'])|
-                                        (filtered_items['medium-spicy']==query['中辣'])|
-                                        (filtered_items['extra-spicy']==query['特辣'])]
-        filtered_items = filtered_items.sort_index()
-        filtered_items = filtered_items.loc[indexes]
-
-        # vectors = filtered_items[soft_constraints].to_numpy()
-        vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
-        # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
-        vector = np.array(list(query.get(mapping.get(k), 3) for k in soft_constraints)).reshape(1, -1)
-        # vector = np.array(list(query.values())[8:]).reshape(1,-1)
-        sim = cosine_similarity(vector, vectors)
-        top_idx = sim.argmax(axis=1)
-        # print(filtered_items)
-        # 输出样例：
-        # city_id                   17
-        # restaurant_id              9
-        # food_id                    7
-        # food_name             野生菌炖土鸡
-        # price                  298.0
-        # ...（省略其它字段）...
-        # id                    17_9_7
-        # Name: (1.0, 1.0, 1.0), dtype: object
-        return filtered_items.iloc[top_idx.item()]
-
-    
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
-
-    logging.info("Starting meal service")
-    meal_service = MealService()
-
-    # user_info = {"出生地":"上海", "性别":"男", "年龄":"19", "当前日期": "2025-5-11"}
-    user_info = UserInfo(user_id="362531200504090911", ticket_info={})
-    history = [{'role':'user', 'content':'我想吃点粤菜，你有什么推荐的吗？'}, {'role':'assistant', 'content':'Thought:'}]
-
-    start = time.time()
-    meal_service({}, user_info, history)
-    end = time.time()
-    logger.info(f'耗时：{end-start}')
-
-
-
-
-# 示例: encode [烤鸭] -> {...}
+    # 示例: encode [烤鸭] -> {...}
     """result
     {
       "饮食类型": 1,
@@ -392,4 +332,58 @@ if __name__ == "__main__":
     }
     """
 
+    def KNN(self, query: dict) -> pd.Series:
+        for attr in ['饮食类型', '菜系', '中西餐']:
+            if query[attr] == 0:
+                query[attr] = slice(None)
+        price_range = query.get('价格', '未加限定')
+        if price_range != '未加限定' and isinstance(price_range, list) and len(price_range) == 2:
+            filtered_items = self.items[
+                (self.items['price'] >= query['价格'][0]) & (self.items['price'] <= query['价格'][1])]
+        else:
+            filtered_items = self.items
 
+        indexes = (query['饮食类型'], query['菜系'], query['中西餐'])
+        filtered_items = filtered_items[(filtered_items['not-spicy']==query['不辣'])|
+                                        (filtered_items['slightly-spicy']==query['微辣'])|
+                                        (filtered_items['medium-spicy']==query['中辣'])|
+                                        (filtered_items['extra-spicy']==query['特辣'])]
+        filtered_items = filtered_items.sort_index()
+        filtered_items = filtered_items.loc[indexes]
+
+        # vectors = filtered_items[soft_constraints].to_numpy()
+        vectors = filtered_items[soft_constraints].fillna(0).to_numpy()
+        # vector = np.array([query[k] for k in soft_constraints]).reshape(1, -1)
+        vector = np.array(list(query.get(mapping.get(k), 3) for k in soft_constraints)).reshape(1, -1)
+        # vector = np.array(list(query.values())[8:]).reshape(1,-1)
+        sim = cosine_similarity(vector, vectors)
+        top_idx = sim.argmax(axis=1)
+        # print(filtered_items)
+        # 输出样例：
+        # city_id                   17
+        # restaurant_id              9
+        # food_id                    7
+        # food_name             野生菌炖土鸡
+        # price                  298.0
+        # ...（省略其它字段）...
+        # id                    17_9_7
+        # Name: (1.0, 1.0, 1.0), dtype: object
+        return filtered_items.iloc[top_idx.item()]
+
+    
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
+
+    logging.info("Starting meal service")
+    meal_service = MealService()
+
+    # user_info = {"出生地":"上海", "性别":"男", "年龄":"19", "当前日期": "2025-5-11"}
+    user_info = UserInfo(user_id="362531200504090911", ticket_info={})
+    history = [{'role':'user', 'content':'我想吃点粤菜，你有什么推荐的吗？'}, {'role':'assistant', 'content':'Thought:'}]
+
+    start = time.time()
+    meal_service({}, user_info, history)
+    end = time.time()
+    logger.info(f'耗时：{end-start}')
