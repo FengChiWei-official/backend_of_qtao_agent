@@ -7,7 +7,7 @@ if str(get_root_path()) not in sys.path:
 from .utils import Looper
 
 from src.modules.services.service_basis.user_info import UserInfo  # Adjust the import path as needed
-from ..business.record_bussiness import DialogueRecordBusiness
+from ..business.record_bussiness import DialogueRecordBusiness # only for type hinting
 
 
 import re
@@ -90,6 +90,10 @@ class State:
 
     @property
     def __load_history_DTO(self) -> list:
+        """
+        加载对话历史记录 DTO（从数据库）
+        :return: 对话历史记录 DTO 列表
+        """
         try:
             history = self.__dependency_record_bussiness.list_records_by_conversation(self.__conversation_id, last_n=10)
         except LookupError as e:
@@ -109,9 +113,11 @@ class State:
         # 将DTO转换为字典列表
         return [msg    for record in history    for msg in record.to_json()]
 
+
     def __push_to_history(self):
         """
-        将当前对话上下文推送到历史记录中
+        将当前对话上下文推送到历史记录中,
+        history 被保存在数据库中，而不是内存
         """
         self.__dependency_record_bussiness.create_record(
             conversation_id=self.__conversation_id,
@@ -294,7 +300,7 @@ class State:
         self.looper.reset()
 
 
-    def handle_llm_response(self, response: str):
+    def handle_llm_response_and_try_to_stop(self, response: str):
         """
         处理LLM的响应, 要不然start—thought_action， 要不然close-context
         :param response: LLM的响应字符串
