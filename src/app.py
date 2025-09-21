@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from src.modules import (
-    MealService, TicketQuery, WeatherQuery, TravelPlan, Registry,
+    MealService, TicketQuery, TicketQueryMappingDate, WeatherQuery, TravelPlan, Registry,
     UserBusiness, ConversationBusiness, DialogueRecordBusiness,
     AgentManager, prompt,
     get_user_business as handler_get_user_business,
@@ -55,7 +55,7 @@ note: 调用了这个工具就要输出 images = ["<图片链接1>", "<图片链
 meal_top_k = 3
 registry = Registry()
 registry.register(MealService())
-registry.register(TicketQuery())
+registry.register(TicketQueryMappingDate())
 registry.register(WeatherQuery())
 registry.register(TravelPlan())
 agent_manager_instance = AgentManager(tools=registry, record_business=record_business_instance, prompt_template=prompt)

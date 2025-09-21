@@ -24,6 +24,7 @@ from .services import (
     # Tool services
     MealService,
     TicketQuery,
+    TicketQueryMappingDate,
     WeatherQuery,
     TravelPlan,
     Registry,
@@ -44,6 +45,7 @@ __all__ = [
     # Tools
     "MealService",
     "TicketQuery",
+    "TicketQueryMappingDate",
     "WeatherQuery",
     "TravelPlan",
     "Registry",

@@ -10,9 +10,11 @@ from .agent import (
 from .service_basis import (
     MealService,
     TicketQuery,
+    TicketQueryMappingDate,
     WeatherQuery,
     TravelPlan,
     Registry,
+    
 )
 
 __all__ = [
@@ -23,6 +25,7 @@ __all__ = [
     "prompt",
     "MealService",
     "TicketQuery",
+    "TicketQueryMappingDate",
     "WeatherQuery",
     "TravelPlan",
     "Registry",
