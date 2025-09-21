@@ -51,7 +51,7 @@ content-type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "session_id": "{{session_id}}",
+  "session_id": "{{id}}",
   "query": "你好"
 }
 
@@ -62,7 +62,7 @@ content-type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "session_id": "{{session_id}}",
+  "session_id": "{{id}}",
   "query": "查询明天早上重庆到北京的车票"
 }
 
@@ -72,13 +72,13 @@ content-type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "session_id": "{{session_id}}",
+  "session_id": "{{id}}",
   "query": "推荐重庆的面馆"
 }
 
 
 #### Get Chat History
-GET 127.0.0.1:8000/api/v1/session/{{session_id}}/history
+GET 127.0.0.1:8000/api/v1/session/{{id}}/history
 content-type: application/json
 Authorization: Bearer {{token}}
 
@@ -103,7 +103,7 @@ Authorization: Bearer {{token}}
 
 
 #### Get Session Details
-GET 127.0.0.1:8000/api/v1/session/{{session_id}}
+GET 127.0.0.1:8000/api/v1/session/{{id}}
 content-type: application/json
 Authorization: Bearer {{token}}
 
@@ -115,7 +115,7 @@ Authorization: Bearer {{token}}
 
 
 #### Update Session Name
-PUT 127.0.0.1:8000/api/v1/session/{{session_id}}/name
+PUT 127.0.0.1:8000/api/v1/session/{{id}}/name
 content-type: application/json
 Authorization: Bearer {{token}}
 

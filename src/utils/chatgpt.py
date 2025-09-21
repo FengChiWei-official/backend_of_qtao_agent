@@ -9,18 +9,31 @@ PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
 config_loader = ConfigLoader(PATH_TO_CONFIG)
 
 
+# 缓存 LLM 配置
+_llm_config_cache = None
+def get_llm_config() -> dict:
+    """
+    获取本地 LLM 配置
+    :return: 返回一个包含 LLM 配置的字典
+    """
+    global _llm_config_cache
+    if _llm_config_cache is None:
+        _llm_config_cache = config_loader.get_llm_config()
+    return _llm_config_cache
+
+
 def feed_LLM_full(history: list) -> Iterable:
     """
     根据历史记录生成回复
     :param history: 历史记录列表
     :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
     """
+    llm_config = get_llm_config()
     client = OpenAI(
-        api_key=config_loader.get_llm_config().get("api_key"),
-        base_url=config_loader.get_llm_config().get("base_url"),
+        api_key=llm_config.get("api_key"),
+        base_url=llm_config.get("base_url"),
     )
     messages = [ChatCompletionUserMessageParam(role=msg["role"], content=msg["content"]) for msg in history]
-    llm_config = config_loader.get_llm_config()
     model = llm_config.get("model") or "qwen3-235b-a22b-instruct-2507"
     stop = llm_config.get("stop")
     create_kwargs = {
@@ -40,15 +53,16 @@ def feed_LLM(prompt: str) -> Iterable:
         :param prompt: 输入大模型的提示词
         :return: 返回一个生成器对象，迭代获取每个流式响应块（chunk），每个chunk为OpenAI API的响应对象
         """
+        llm_config = get_llm_config()
         client = OpenAI(
-            api_key=config_loader.get_llm_config().get("api_key"),
-            base_url=config_loader.get_llm_config().get("base_url"),
+            api_key=llm_config.get("api_key"),
+            base_url=llm_config.get("base_url"),
         )
         messages = [ChatCompletionUserMessageParam(role="user", content=prompt)]
         completion = client.chat.completions.create(
-            model=config_loader.get_llm_config().get("model") or "qwen3-235b-a22b-instruct-2507",
+            model=llm_config.get("model") or "qwen3-235b-a22b-instruct-2507",
             messages=messages,
-            stop=config_loader.get_llm_config().get("stop"),
+            stop=llm_config.get("stop"),
             stream=True,
             stream_options={"include_usage": False}
         )

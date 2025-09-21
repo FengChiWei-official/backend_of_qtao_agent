@@ -27,7 +27,7 @@ class ConversationDAO:
                 raise AttributeError("Conversation must have a user_id set.")
             name = getattr(conversation, 'session_name', None)
             if not name or name.strip() == "":
-                conversation.session_name = f"session {datetime.now().strftime('%Y-%m-%d %H:%M:%S:%f')}"
+                conversation.session_name = f"session {datetime.now().strftime('%Y-%m-%d:%H:%M:%S:%f')}"
             user = session.query(User).filter(User.id == conversation.user_id).first()
             if not user:
                 raise ValueError(f"User with ID {conversation.user_id} does not exist.")
