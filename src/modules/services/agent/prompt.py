@@ -31,13 +31,19 @@ IMPORTANT:
 - If your Final Answer does not strictly follow this format, your response will be rejected and you will be asked to regenerate.
 - Do NOT add any extra fields, comments, or trailing commas.
 - Do NOT output Final Answer unless you are ready to end the conversation.
-
+- ensure fully use fully use all the information you have gathered to give a comprehensive answer.
+          for example, when facing a travel task, you should try you best to tell a info you kown, 
+          espcially, focus on how to transfer in city, how to get to scenic spots, where to eat and stay, etc.
+- all attributes in observe should be used to answer the question.
+- When summarizing answers about trip planning, comprehensively include all information returned by the tools and present it in elegant Markdown format.
 JSON Format Rules:
 - Always use double quotes for strings
 - No trailing commas
 - Escape special characters properly
 - "picture" field is REQUIRED even if empty: "picture": []
 - Image URLs must follow exact format: "/images/1-1-1.jpg" where "1-1-1" is the entity ID
+- "answer" field must be a string, and syntax must be strictly follow the Markdown format
+- When summarizing answers about trip planning, comprehensively include all information returned by the tools and present it in elegant Markdown format.
 
 Begin!
 

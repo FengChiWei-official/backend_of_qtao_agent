@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 
-router = APIRouter(prefix="/api/v1", tags=["user"])
+user_router = APIRouter(prefix="/api/v1", tags=["user"])
 
 def get_user_business() -> 'UserBusiness':
     raise NotImplementedError("请在 main.py 中通过 Depends 覆盖此依赖")
@@ -24,6 +24,7 @@ class RegisterRequest(BaseModel):
     email: str
 
 class LoginRequest(BaseModel):
+    # that should be username or email
     username: str
     password: str
 
@@ -33,7 +34,7 @@ class LogoutRequest(BaseModel):
 class UserInfoResponse(BaseModel):
     user: dict
 
-@router.post("/register", summary="用户注册", response_model=BaseResponse)
+@user_router.post("/register", summary="用户注册", response_model=BaseResponse)
 def register(req: RegisterRequest, user_business: 'UserBusiness' = Depends(get_user_business)):
     try:
         user = user_business.register_user(
@@ -84,7 +85,7 @@ def register(req: RegisterRequest, user_business: 'UserBusiness' = Depends(get_u
             }
         )
 
-@router.post("/login", summary="用户登录", response_model=BaseResponse)
+@user_router.post("/login", summary="用户登录", response_model=BaseResponse)
 def login(req: LoginRequest, user_business: 'UserBusiness' = Depends(get_user_business)):
     try:
         user = user_business.login_user(req.username, req.password)
@@ -122,12 +123,12 @@ def login(req: LoginRequest, user_business: 'UserBusiness' = Depends(get_user_bu
         )
 
 
-@router.post("/protected/logout", summary="用户登出", response_model=BaseResponse)
+@user_router.post("/protected/logout", summary="用户登出", response_model=BaseResponse)
 def logout(req: LogoutRequest, current_user=Depends(get_current_user)):
     # 实际应移除 session/token
     return BaseResponse(msg="Logout success", data=None)
 
-@router.get("/protected/userinfo", summary="获取用户信息", response_model=BaseResponse)
+@user_router.get("/protected/userinfo", summary="获取用户信息", response_model=BaseResponse)
 def get_user_info(current_user=Depends(get_current_user), user_business: 'UserBusiness' = Depends(get_user_business)):
     try:
         user_id = current_user  # 修正为直接取字符串

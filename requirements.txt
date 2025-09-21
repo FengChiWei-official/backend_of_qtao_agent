@@ -1,7 +1,7 @@
 fastapi==0.116.1
 numpy==1.26.4
 openai==1.97.1
-pandas==2.3.1
+pandas==2.2.2
 pydantic==2.6.4
 PyJWT==2.10.1
 python_Levenshtein==0.27.1
@@ -14,3 +14,15 @@ uvicorn==0.35.0
 alembic==1.14.0
 pymysql==1.1.0
 cryptography==41.0.7
+json_repair
+tiktoken~=0.11.0
+datasets~=4.1.0
+transformers~=4.50.3
+scikit-learn~=1.7.1
+geopy~=2.4.1
+tqdm~=4.67.1
+fuzzywuzzy~=0.18.0
+jsonschema~=4.25.1
+levenshtein~=0.27.1
+yaml~=0.2.5
+pytest~=8.4.2

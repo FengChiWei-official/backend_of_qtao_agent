@@ -15,6 +15,9 @@ import time
 
 from src.modules.services.service_basis.basis.tool import Tool
 from src.modules.services.service_basis.user_info import UserInfo
+import re
+import json
+from typing import Any
 from src.utils.chatgpt import feed_LLM
 
 
@@ -222,10 +225,57 @@ class MealService(Tool):
         completion = ''
         for chunk in completion_generator:
             completion += chunk.choices[0].delta.content
-        match = re.search(r'\s*(\{.*\})\s*', completion, re.DOTALL)
-        if not match:
-            raise ValueError("No dictionary block found in LLM response.")
-        judge_result = eval(match.group(1))
+        
+        try:
+            # 尝试多种方法来提取JSON
+            json_str = None
+            judge_result = None
+            
+            # 方法1: 找到第一个完整的JSON对象
+            start_index = completion.find('{')
+            if start_index != -1:
+                brace_count = 0
+                for i, char in enumerate(completion[start_index:], start_index):
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_str = completion[start_index:i+1]
+                            break
+            
+            if json_str is None:
+                # 方法2: 回退到原来的方法
+                start_index = completion.find('{')
+                end_index = completion.rfind('}')
+                if start_index == -1 or end_index == -1 or start_index >= end_index:
+                    raise ValueError("No valid JSON object boundaries found in LLM response.")
+                json_str = completion[start_index : end_index + 1]
+            
+            # 使用更安全的 json.loads 解析
+            judge_result = json.loads(json_str)
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"Initial JSON parsing failed: {e}")
+            logger.debug(f"Original completion: {completion}")
+            logger.debug(f"Extracted json_str: {json_str}")
+            
+            # 如果直接解析失败，则认为可能包含了注释等额外字符，并尝试清理
+            try:
+                # 移除非JSON字符，保留基本的JSON结构字符
+                cleaned_str = re.sub(r'[^\w\s.,{}:"\[\]-]', '', json_str)
+                logger.debug(f"Cleaned json_str: {cleaned_str}")
+                judge_result = json.loads(cleaned_str)
+                logger.info("Successfully parsed JSON after cleaning")
+            except json.JSONDecodeError as clean_error:
+                logger.error(f"Failed to decode JSON even after cleaning")
+                logger.error(f"Original error: {e}")
+                logger.error(f"Cleaning error: {clean_error}")
+                logger.error(f"Original completion: {completion}")
+                logger.error(f"Extracted json_str: {json_str}")
+                logger.error(f"Cleaned json_str: {cleaned_str}")
+                # 如果清理后仍然失败，则抛出最终异常
+                raise ValueError(f"Failed to decode JSON from LLM response after cleaning. Original string: '{json_str}'. Cleaned string: '{cleaned_str}'. Original error: {e}. Cleaning error: {clean_error}")
+
         for key, val in judge_result.items():
             if val is not None:
                 for item in retrieved_items:

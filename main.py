@@ -1,15 +1,25 @@
 import logging
-
+from sys import path
 from src.utils import root_path
-from config import ConfigLoader
-
-
 PATH_TO_ROOT = root_path.get_root_path()
-PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
+DEFAULT_PATH_TO_CONFIG = PATH_TO_ROOT / "config" / "config.yaml"
+path.append(str(PATH_TO_ROOT))
+
+from config import ConfigLoader
 
 if __name__ == "__main__":
     import uvicorn
-    server_config = ConfigLoader(PATH_TO_CONFIG).get_server_config()
+
+    import argparse
+    parser = argparse.ArgumentParser(description="Start backend server")
+    parser.add_argument(
+        '--config',
+        type=str,
+        default=DEFAULT_PATH_TO_CONFIG,
+        help='Path to the configuration file.'
+    )
+    args = parser.parse_args()
+    server_config = ConfigLoader(args.config).get_server_config()
 
     # 日志级别兼容字符串和int
     log_level_str = server_config.get("log_level", "info")

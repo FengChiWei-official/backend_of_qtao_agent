@@ -45,7 +45,7 @@ class UserBusiness:
             raise e
         return UserDTO.from_obj(user)
 
-    def login_user(self, username: str, password: str) -> UserDTO:
+    def login_user(self, username_or_email: str, password: str) -> UserDTO:
         """
         用户登录
         :param username: 用户名
@@ -55,9 +55,12 @@ class UserBusiness:
         :raises ValueError: 如果密码不正确
         """
         try:
-            user = self.user_dao.get_user_by_username(username)
-        except (LookupError, ValueError) as e:
-            raise LookupError(f"dao error, {username} not found") from e
+            user = self.user_dao.get_user_by_username(username_or_email)
+        except (LookupError, ValueError):
+            try:
+                user = self.user_dao.get_user_by_email(username_or_email)
+            except (LookupError, ValueError) as e:
+                raise LookupError(f"User '{username_or_email}' not found") from e
         password_hash = to_hash(password)
         if user.password_hash != password_hash:
             raise ValueError("Incorrect password.")

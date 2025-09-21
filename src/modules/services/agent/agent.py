@@ -39,7 +39,7 @@ class Agent():
             response = self.llm(self.state.generate_history_with_context_and_prompt())
             logger.debug(f"LLM response: {response}")  # 记录 response 内容
 
-            self.state.handle_llm_response(response)
+            self.state.handle_llm_response_and_try_to_stop(response)
             
             if self.state.looper.is_maxed_out():
                 break
