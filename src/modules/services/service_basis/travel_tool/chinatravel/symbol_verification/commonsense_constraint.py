@@ -14,7 +14,13 @@ import os
 import sys
 from tqdm import tqdm
 
-from chinatravel.evaluation.utils import load_json_file
+# Try relative import if the module is local
+try:
+    from ..evaluation.utils import load_json_file
+except ImportError:
+    # Fallback: define a dummy function or handle the error
+    def load_json_file(path):
+        raise ImportError("Cannot import load_json_file. Please check your module path.")
     
 import pandas as pd
 

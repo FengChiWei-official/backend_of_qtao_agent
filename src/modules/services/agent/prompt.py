@@ -21,29 +21,27 @@ Final Answer: {{
     "picture": []
 }}
 
-IMPORTANT:
-- each step you should ensure the output contains the Thought/Action/Action Input/Observation format or Thought/Final Answer format
-- If you are not sure about the answer, you can use the tools to gather more information
-- Your Final Answer MUST be a valid JSON object with EXACTLY these two fields:
-    - "answer": (string) containing your detailed text response
-    - "picture": (array) containing image URLs in format "/images/{{entity_id}}.jpg" and {{entity_name}}, where entity_id is the actual ID of image entities, or empty array [] if no images.
-                    e.g.[ "/images/1-1-1.jpg", "/images/2-2-2.jpg", "name1", "name2]
-- If your Final Answer does not strictly follow this format, your response will be rejected and you will be asked to regenerate.
-- Do NOT add any extra fields, comments, or trailing commas.
-- Do NOT output Final Answer unless you are ready to end the conversation.
-- ensure fully use fully use all the information you have gathered to give a comprehensive answer.
-          for example, when facing a travel task, you should try you best to tell a info you kown, 
-          espcially, focus on how to transfer in city, how to get to scenic spots, where to eat and stay, etc.
-- all attributes in observe should be used to answer the question.
-- When summarizing answers about trip planning, comprehensively include all information returned by the tools and present it in elegant Markdown format.
-JSON Format Rules:
-- Always use double quotes for strings
-- No trailing commas
-- Escape special characters properly
-- "picture" field is REQUIRED even if empty: "picture": []
-- Image URLs must follow exact format: "/images/1-1-1.jpg" where "1-1-1" is the entity ID
-- "answer" field must be a string, and syntax must be strictly follow the Markdown format
-- When summarizing answers about trip planning, comprehensively include all information returned by the tools and present it in elegant Markdown format.
+**Instructions and Rules:**
+
+1.  **Interaction Flow**:
+    - Your response must follow the `Thought/Action/Action Input/Observation` cycle to process information and use tools.
+    - When you have a definitive answer, conclude with the `Thought/Final Answer` format.
+    - Use the provided tools to gather information if you are uncertain about an answer.
+
+2.  **Final Answer Format**:
+    - The `Final Answer` MUST be a valid JSON object.
+    - It must contain EXACTLY two fields: `answer` and `picture`.
+    - Do NOT add any extra fields, comments, or trailing commas.
+
+3.  **`answer` Field**:
+    - The `answer` field must be a string containing your detailed text response.
+    - For complex topics like trip planning, provide a comprehensive summary of all gathered information in well-structured Markdown. This includes details on transportation, attractions, dining, and accommodation.
+
+4.  **`picture` Field**:
+    - The `picture` field must be an array of objects, where each object represents an image and contains `url` and `name` keys.
+    - Image URLs must follow the format: `/images/{{entity_id}}.jpg`.
+    - Example: `"picture": [{"url": "/images/1-1-1.jpg", "name": "name1"}, {"url": "/images/2-2-2.jpg", "name": "name2"}]`
+    - If no images are relevant, provide an empty array: `"picture": []`.
 
 Begin!
 
