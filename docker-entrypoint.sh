@@ -1,4 +1,4 @@
-until mysql -h smai_db -uappuser -pappuserpwd -e "select 1" tstDB; do
+until mysql -h smai_db -uappuser -pCoS_fa_au_23mi -e "select 1" tstDB; do
   echo "Waiting for MySQL to be ready..."
   sleep 2
 done
