@@ -4,10 +4,10 @@ openai==1.97.1
 pandas==2.2.2
 pydantic==2.6.4
 PyJWT==2.10.1
-python_Levenshtein==0.27.1
+python-Levenshtein==0.27.1
 PyYAML==6.0.2
-Requests==2.32.4
-scikit_learn==1.7.1
+requests==2.32.4
+scikit-learn==1.7.1
 SQLAlchemy==2.0.41
 starlette==0.47.2
 uvicorn==0.35.0
@@ -18,11 +18,8 @@ json_repair==0.51.0
 tiktoken==0.11.0
 datasets==4.1.1
 transformers~=4.50.3
-scikit-learn~=1.7.1
 geopy~=2.4.1
 tqdm~=4.67.1
 fuzzywuzzy~=0.18.0
 jsonschema~=4.25.1
-levenshtein~=0.27.1
-yaml~=0.2.5
 pytest~=8.4.2

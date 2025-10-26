@@ -17,9 +17,10 @@ RUN pip install -r /app/requirements.txt
 
 # 复制项目代码（包含 config、src、static、dataset 等）
 COPY src /app/src
+COPY main.py /app/main.py
 # 创建挂载点
-RUN mkdir -p /app/static /app/dataset /app/config /app/script /app/alembic /app/logs && \
-    chown app:app /app/static /app/dataset /app/config /app/script /app/alembic /app/logs
+RUN mkdir -p /app/static /app/dataset /app/config /app/script /app/alembic /app/logs /app/cache && \
+    chown -R app:app /app/static /app/dataset /app/config /app/script /app/alembic /app/logs /app/cache
 
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chown app:app /app/docker-entrypoint.sh
