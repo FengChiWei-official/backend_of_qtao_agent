@@ -334,7 +334,7 @@ class State:
         contexts_str = self.__query + "\n".join(json.dumps(c, ensure_ascii=False) for c in contexts if c is not None)
         if is_containing_prompt:
             contexts_str = (
-                self._load_prompt_template
+                self._load_prompt_template()
                 + """
                 Begin!
 
