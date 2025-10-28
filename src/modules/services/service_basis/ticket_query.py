@@ -259,7 +259,7 @@ class TicketQueryMappingDate(TicketQuery):
         self.arrive_date_range: list[pd.Timestamp] = [self.tickets['到达日期'].min(), self.tickets['到达日期'].max()]
 
 
-    def mapping_date(self, date_str_0: str, date_str_1: str, valid_range: list[pd.Timestamp]) -> tuple[str] | None:
+    def mapping_date(self, date_str_0: str, date_str_1: str, valid_range: list[pd.Timestamp]) -> tuple[pd.Timestamp, pd.Timestamp]:
         """
         将用户输入的日期字符串映射到系统中的日期范围的中间，以提高匹配成功率；保存原有的日期格式和时间上的距离
         :param departure_date_str: 用户输入的出发日期字符串
@@ -272,9 +272,11 @@ class TicketQueryMappingDate(TicketQuery):
         if pd.isna(mapped_date_str_0) or pd.isna(mapped_date_str_1):
             raise ValueError("需要有效的日期字符串进行映射")   
      
-        mapped_date_str_1 = mid_tag + (mapped_date_str_1 - mapped_date_str_0) 
+        # 将用户输入的区间平移到有效范围的中点附近，保留两端的间距
+        mapped_date_str_1 = mid_tag + (mapped_date_str_1 - mapped_date_str_0)
         mapped_date_str_0 = mid_tag
-        return mapped_date_str_0.srftime('%Y-%m-%d') , mapped_date_str_1.srftime('%Y-%m-%d')
+        # 返回 pd.Timestamp 对象，调用方在需要时可以格式化为字符串或用于时间计算
+        return mapped_date_str_0, mapped_date_str_1
     
     def __call__(self, parameter: dict, user_info: UserInfo, history: list) -> list:
         """
@@ -338,6 +340,8 @@ class TicketQueryMappingDate(TicketQuery):
                     delta_days = (item['到达日期'] - parameter['到站日期']).days
                     item['到达日期'] = pd.to_datetime(original_arrive_date) + pd.Timedelta(days=delta_days)
             remapped_ans.append(item)
+        # 返回重映射后的结果列表
+        return remapped_ans
 if __name__ == '__main__':
     user_id = "130632196606166516"
     ticket_info = {"train_number": "G1001", "departure_time": "2024-12-20 09:00", "seat_type": "二等座"}

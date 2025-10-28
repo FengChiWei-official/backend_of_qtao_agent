@@ -8,7 +8,7 @@ tips: current date: {date}
 Use the following format:
 
 Question: the input question you must answer
-Thought: you should always think about what to doi
+Thought: you should always think about what to do
 Action Input: the input to the action
 Observation: the result of the action
 

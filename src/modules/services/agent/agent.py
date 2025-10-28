@@ -2,6 +2,7 @@ from typing import Any
 from .state import State
 from src.utils.root_path import get_root_path
 import sys
+import json
 if str(get_root_path()) not in sys.path:
     sys.path.append(str(get_root_path()))
 import threading
@@ -47,10 +48,22 @@ class Agent():
             self.state.looper.increment()
 
             action_name, action_input = self.state.generate_action_input_for_tools()
+            # If the LLM did not produce an action name, skip calling tools and record observation
+            if not action_name:
+                logger.warning("LLM did not provide an action name; skipping tool call. action_input=%s", action_input)
+                tools_output = f"No action produced by LLM. action_input={action_input}"
+                # feed the observation back into the state so the agent can continue
+                self.state.handle_observation(tools_output)
+                # continue loop to let LLM respond again (or break by looper)
+                continue
+
             try:
                 service = self.tools.get_service(action_name)
                 # Pass a deep copy of action_input to tools so they don't mutate the State's internal dict
-                tools_output = str(service(copy.deepcopy(action_input), self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
+                #tools_output = str(service(copy.deepcopy(action_input), self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
+                copy_input = json.loads(json.dumps(action_input))  # another way to deep copy
+                tools_output = str(copy_input, self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False))
+            
             except KeyError:
                 logger.error(f"Service '{action_name}' not found in tools registry.")
                 tools_output = f"Service '{action_name}' not found. Please check the service name and try again."
