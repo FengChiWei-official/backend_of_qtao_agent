@@ -40,7 +40,7 @@ Final Answer: {{
 4.  **`picture` Field**:
     - The `picture` field must be an array of objects, where each object represents an image and contains `url` and `name` keys.
     - Image URLs must follow the format: `/images/{{entity_id}}.jpg`.
-    - Example: `"picture": [{"url": "/images/1-1-1.jpg", "name": "name1"}, {"url": "/images/2-2-2.jpg", "name": "name2"}]`
+    - Example: `"picture": [{{"url": "/images/1-1-1.jpg", "name": "name1"}}, {{"url": "/images/2-2-2.jpg", "name": "name2"}}]`
     - If no images are relevant, provide an empty array: `"picture": []`.
 
 Begin!

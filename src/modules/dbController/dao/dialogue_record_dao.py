@@ -154,9 +154,9 @@ class DialogueRecordDAO:
         :raises LookupError: 如果没有找到对话记录
         """
         with self.__db_session_manager.get_session() as session:
-            reversed_records = session.query(DialogueRecord).filter(DialogueRecord.conversation_id == conversation_id, DialogueRecord.is_removed == False).order_by(DialogueRecord.created_at.desc()).all()
-            if last_n is not None:
-                reversed_records = reversed_records[:last_n]
+            reversed_records = session.query(DialogueRecord).filter(DialogueRecord.conversation_id == conversation_id, DialogueRecord.is_removed == False).order_by(DialogueRecord.created_at.desc()).limit(last_n).all()
+            # if last_n is not None:
+            #     reversed_records = reversed_records[:last_n]
             ordered_dialogue_records = reversed_records[::-1]  # Reverse to maintain chronological order
             if not ordered_dialogue_records:
                 logger.warning(f"No dialogue records found for conversation ID: {conversation_id}")

@@ -20,7 +20,7 @@ COPY src /app/src
 COPY main.py /app/main.py
 # 创建挂载点
 RUN mkdir -p /app/static /app/dataset /app/config /app/script /app/alembic /app/logs /app/cache && \
-    chown -R app:app /app/static /app/dataset /app/config /app/script /app/alembic /app/logs /app/cache
+    chown -R app:app /app/static /app/dataset /app/config /app/script /app/alembic /app/logs /app/cache /app
 
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chown app:app /app/docker-entrypoint.sh
@@ -28,7 +28,7 @@ RUN chown app:app /app/docker-entrypoint.sh
 # 暴露端口
 EXPOSE 8000
 
-RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
 USER app
 
 
