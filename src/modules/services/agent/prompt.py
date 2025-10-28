@@ -8,8 +8,7 @@ tips: current date: {date}
 Use the following format:
 
 Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
+Thought: you should always think about what to doi
 Action Input: the input to the action
 Observation: the result of the action
 
@@ -43,6 +42,4 @@ Final Answer: {{
     - Example: `"picture": [{{"url": "/images/1-1-1.jpg", "name": "name1"}}, {{"url": "/images/2-2-2.jpg", "name": "name2"}}]`
     - If no images are relevant, provide an empty array: `"picture": []`.
 
-Begin!
-
-Question: """)
+""")

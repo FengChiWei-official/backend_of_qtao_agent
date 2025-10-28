@@ -324,12 +324,23 @@ class State:
         生成查询字符串以供LLM使用
         :return: 查询字符串
         """
-        history = self.__load_history()
+        history = []
+        history.append({"role": "system", "content": self._load_prompt_template()})
+        
+        history += self.__load_history()
 
         contexts = [idx.get("raw") for idx in self.__context]
         contexts_str = self.__query + "\n".join(json.dumps(c, ensure_ascii=False) for c in contexts if c is not None)
         if is_containing_prompt:
-            contexts_str = self._load_prompt_template() + contexts_str
+            contexts_str = (
+                self._load_prompt_template
+                + """
+                Begin!
+
+                Question: 
+                """ 
+                + contexts_str
+            )
 
         new_message = {
             "role": "user",
