@@ -109,6 +109,31 @@ class TicketQuery(Tool):
         查询票务信息
         :param user_info: 用户信息
         :return: 查询的票务信息
+        [
+'找到5条路线：重庆北 → 上海, 重庆北 → 上海松江, 重庆北 → 上海南, 重庆北 → 上海虹桥, 重庆西 → 上海虹桥', 
+	{
+		'出发日期': Timestamp('2025-05-11 00:00:00'), 
+		'车次': 'Z258', 
+		'起始站': '重庆北',
+		'终点站': '上海南',
+		'出发时间': Timestamp('2025-10-26 14:10:00'), 
+		'到达时间': Timestamp('2025-10-26 08:18:00'), 
+		'历时': '18:08', 
+		'硬卧/二等卧': '无', 
+		'到达日期': Timestamp('2025-05-12 00:00:00')
+	}, 
+	{
+		'出发日期': Timestamp('2025-05-11 00:00:00'), 
+		'车次': 'Z258', 
+		'起始站': '重庆北', 
+		'终点站': '上海松江', 
+		'出发时间': Timestamp('2025-10-26 14:10:00'), 
+		'到达时间': Timestamp('2025-10-26 07:32:00'), 
+		'历时': '17:22', 
+		'硬卧/二等卧': '无', 
+		'到达日期': Timestamp('2025-05-12 00:00:00')
+	}
+]
         """
 
         l_info = []
@@ -233,43 +258,24 @@ class TicketQueryMappingDate(TicketQuery):
         self.departure_date_range: list[pd.Timestamp] = [self.tickets['出发日期'].min(), self.tickets['出发日期'].max()]
         self.arrive_date_range: list[pd.Timestamp] = [self.tickets['到达日期'].min(), self.tickets['到达日期'].max()]
 
-    from typing import Optional, Tuple
 
-    def mapping_date(self, date_str: str, valid_range: list[pd.Timestamp]) -> pd.Timestamp | None:
+    def mapping_date(self, date_str_0: str, date_str_1: str, valid_range: list[pd.Timestamp]) -> tuple[str] | None:
         """
-        将用户输入的日期字符串映射到系统中的日期范围
+        将用户输入的日期字符串映射到系统中的日期范围的中间，以提高匹配成功率；保存原有的日期格式和时间上的距离
         :param departure_date_str: 用户输入的出发日期字符串
         :param arrive_date_str: 用户输入的到达日期字符串
         :return: 映射后的日期范围描述
         """
-        date_in_date = pd.to_datetime(date_str, errors='coerce')
-
-        # 处理出发日期
-        if not pd.isna(date_in_date):
-            # 如果输入日期超出范围
-            if not (valid_range[0] <= date_in_date <= valid_range[1]):
-                try:
-                    # 尝试映射到可用范围内的年份
-                    mapped_date = date_in_date.replace(year=valid_range[0].year)
-                    
-                    # 如果映射后的日期仍然在范围外，则再次尝试下一个年份
-                    if not (valid_range[0] <= mapped_date <= valid_range[1]):
-                         mapped_date = date_in_date.replace(year=valid_range[0].year + 1)
-
-                    # 再次检查是否在范围内，如果不在，则使用范围的起始日期
-                    if valid_range[0] <= mapped_date <= valid_range[1]:
-                        date_in_date = mapped_date
-                    else:
-                        date_in_date = valid_range[0]
-                except ValueError:
-                    # 处理无效日期，例如2月30日
-                    date_in_date = valid_range[0]
-        
-        else:
-            return None
-
-        return date_in_date
-
+        mid_tag = valid_range[0] + (valid_range[1] - valid_range[0]) / 2
+        mapped_date_str_0 = pd.to_datetime(date_str_0, errors='coerce')
+        mapped_date_str_1 = pd.to_datetime(date_str_1, errors='coerce')
+        if pd.isna(mapped_date_str_0) or pd.isna(mapped_date_str_1):
+            raise ValueError("需要有效的日期字符串进行映射")   
+     
+        mapped_date_str_1 = mid_tag + (mapped_date_str_1 - mapped_date_str_0) 
+        mapped_date_str_0 = mid_tag
+        return mapped_date_str_0.srftime('%Y-%m-%d') , mapped_date_str_1.srftime('%Y-%m-%d')
+    
     def __call__(self, parameter: dict, user_info: UserInfo, history: list) -> list:
         """
         查询票务信息
@@ -277,15 +283,61 @@ class TicketQueryMappingDate(TicketQuery):
         :return: 查询的票务信息
         """
         # 处理日期映射
-        if '发车日期' in parameter and parameter['发车日期'] is not None:
-            mapped_departure_date = self.mapping_date(parameter['发车日期'], self.departure_date_range)
-            parameter['发车日期'] = mapped_departure_date.strftime('%Y-%m-%d') if not pd.isna(mapped_departure_date) else None
+        
+        if parameter.get('发车日期') is None:
+            parameter['发车日期'] = parameter.get('到站日期')
+        if parameter.get('到站日期') is None:
+            parameter['到站日期'] = parameter.get('发车日期')
 
-        if '到站日期' in parameter and parameter['到站日期'] is not None:
-            mapped_arrive_date = self.mapping_date(parameter['到站日期'], self.arrive_date_range)
-            parameter['到站日期'] = mapped_arrive_date.strftime('%Y-%m-%d') if not pd.isna(mapped_arrive_date) else None
+        original_departure_date = parameter['发车日期']
+        original_arrive_date = parameter['到站日期']
+        parameter['发车日期'], parameter['到站日期'] = self.mapping_date(
+            parameter['发车日期'],
+            parameter['到站日期'],
+            self.departure_date_range
+        )
+        """
+        调用父类的查询方法
+        [
+'找到5条路线：重庆北 → 上海, 重庆北 → 上海松江, 重庆北 → 上海南, 重庆北 → 上海虹桥, 重庆西 → 上海虹桥', 
+	{
+		'出发日期': Timestamp('2025-05-11 00:00:00'), 
+		'车次': 'Z258', 
+		'起始站': '重庆北',
+		'终点站': '上海南',
+		'出发时间': Timestamp('2025-10-26 14:10:00'), 
+		'到达时间': Timestamp('2025-10-26 08:18:00'), 
+		'历时': '18:08', 
+		'硬卧/二等卧': '无', 
+		'到达日期': Timestamp('2025-05-12 00:00:00')
+	}, 
+	{
+		'出发日期': Timestamp('2025-05-11 00:00:00'), 
+		'车次': 'Z258', 
+		'起始站': '重庆北', 
+		'终点站': '上海松江', 
+		'出发时间': Timestamp('2025-10-26 14:10:00'), 
+		'到达时间': Timestamp('2025-10-26 07:32:00'), 
+		'历时': '17:22', 
+		'硬卧/二等卧': '无', 
+		'到达日期': Timestamp('2025-05-12 00:00:00')
+	}
+]
+        """
+        ans = super().__call__(parameter, user_info, history)
 
-        return super().__call__(parameter, user_info, history)
+        # remapped ans
+        remapped_ans = []
+        for item in ans:
+            if isinstance(item, dict):
+                item = item.copy()
+                if '出发日期' in item:
+                    delta_days = (item['出发日期'] - parameter['发车日期']).days
+                    item['出发日期'] = pd.to_datetime(original_departure_date) + pd.Timedelta(days=delta_days)
+                if '到达日期' in item:
+                    delta_days = (item['到达日期'] - parameter['到站日期']).days
+                    item['到达日期'] = pd.to_datetime(original_arrive_date) + pd.Timedelta(days=delta_days)
+            remapped_ans.append(item)
 if __name__ == '__main__':
     user_id = "130632196606166516"
     ticket_info = {"train_number": "G1001", "departure_time": "2024-12-20 09:00", "seat_type": "二等座"}

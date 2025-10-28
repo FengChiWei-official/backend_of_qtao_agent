@@ -10,6 +10,7 @@ from src.modules.services.business.record_bussiness import DialogueRecordBusines
 from src.utils.chatgpt import feed_LLM_full, gather_llm_output
 from src.modules.services.service_basis.ToolRegistry import Registry
 from src.modules.services.service_basis.user_info import UserInfo
+import copy
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,7 +49,8 @@ class Agent():
             action_name, action_input = self.state.generate_action_input_for_tools()
             try:
                 service = self.tools.get_service(action_name)
-                tools_output = str(service(action_input, self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
+                # Pass a deep copy of action_input to tools so they don't mutate the State's internal dict
+                tools_output = str(service(copy.deepcopy(action_input), self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
             except KeyError:
                 logger.error(f"Service '{action_name}' not found in tools registry.")
                 tools_output = f"Service '{action_name}' not found. Please check the service name and try again."

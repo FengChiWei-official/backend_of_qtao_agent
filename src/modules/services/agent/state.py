@@ -325,7 +325,8 @@ class State:
         :return: 查询字符串
         """
         history = []
-        history.append({"role": "system", "content": self._load_prompt_template()})
+        if is_containing_prompt:
+            history.append({"role": "system", "content": self._load_prompt_template()})
         
         history += self.__load_history()
 
