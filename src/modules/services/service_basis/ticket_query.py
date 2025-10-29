@@ -274,7 +274,7 @@ class TicketQueryMappingDate(TicketQuery):
         :param arrive_date_str: 用户输入的到达日期字符串
         :return: 映射后的日期范围描述
         """
-        mid_tag = valid_range[0] + (valid_range[1] - valid_range[0]) / 2
+        mid_tag = (valid_range[0] + (valid_range[1] - valid_range[0]) / 2)
         mapped_date_str_0 = pd.to_datetime(date_str_0, errors='coerce')
         mapped_date_str_1 = pd.to_datetime(date_str_1, errors='coerce')
         if pd.isna(mapped_date_str_0) or pd.isna(mapped_date_str_1):
@@ -300,19 +300,22 @@ class TicketQueryMappingDate(TicketQuery):
                 parameter = json.loads(parameter)
             except Exception:
                 return [f'参数格式错误: 期望 dict 或 JSON 字符串, 收到 {type(parameter).__name__}']
-
-        if parameter.get('发车日期') is None:
-            parameter['发车日期'] = parameter.get('到站日期')
-        if parameter.get('到站日期') is None:
-            parameter['到站日期'] = parameter.get('发车日期')
-
-        original_departure_date = parameter['发车日期']
-        original_arrive_date = parameter['到站日期']
-        parameter['发车日期'], parameter['到站日期'] = self.mapping_date(
-            parameter['发车日期'],
-            parameter['到站日期'],
+        
+        original_departure_date = parameter.get('发车日期', None)
+        original_arrive_date = parameter.get('到站日期', None)
+        to_map_departure_date = original_departure_date if original_departure_date is not None else original_arrive_date
+        to_map_arrive_date = original_arrive_date if original_arrive_date is not None else original_departure_date
+        
+        to_map_departure_date, to_map_arrive_date = self.mapping_date(
+            to_map_departure_date,
+            to_map_arrive_date,
             self.departure_date_range
         )
+        if original_departure_date is not None:
+            parameter['发车日期'] = to_map_departure_date.strftime('%Y-%m-%d')
+
+        if original_arrive_date is not None:
+            parameter['到站日期'] = to_map_arrive_date.strftime('%Y-%m-%d')
         """
         调用父类的查询方法
         [
@@ -349,11 +352,11 @@ class TicketQueryMappingDate(TicketQuery):
             if isinstance(item, dict):
                 item = item.copy()
                 if '出发日期' in item:
-                    delta_days = (item['出发日期'] - parameter['发车日期']).days
-                    item['出发日期'] = pd.to_datetime(original_departure_date) + pd.Timedelta(days=delta_days)
+                    final_dp_time = pd.to_datetime(original_departure_date) + (item['出发日期'] - to_map_departure_date)
+                    item['出发日期'] = final_dp_time.strftime('%Y-%m-%d')
                 if '到达日期' in item:
-                    delta_days = (item['到达日期'] - parameter['到站日期']).days
-                    item['到达日期'] = pd.to_datetime(original_arrive_date) + pd.Timedelta(days=delta_days)
+                    final_arrv_time = pd.to_datetime(original_arrive_date) + (item['到达日期'] - to_map_arrive_date)
+                    item['到达日期'] = final_arrv_time.strftime('%Y-%m-%d')
             remapped_ans.append(item)
         # 返回重映射后的结果列表
         return remapped_ans

@@ -37,7 +37,11 @@ if __name__ == "__main__":
         "src.app:app",
         host=server_config.get("host", "0.0.0.0"),
         port=server_config.get("port", 8000),
-        reload=server_config.get("reload", True)
+        reload=server_config.get("reload", True),
+        # Limit which directories the reloader watches. This avoids permission errors
+        # when watchfiles tries to access database files (e.g. database_for_trial/my_data).
+        # We watch the backend package directory only.
+        reload_dirs=[str(PATH_TO_ROOT / "backend")]
 
     )
 

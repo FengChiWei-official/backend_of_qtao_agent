@@ -69,7 +69,12 @@ class Agent():
                     self.user_info,
                     self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)
                     )
-                tools_output = str(tools_output)
+                # Serialize tool output to JSON so the LLM receives a stable, JSON-friendly observation
+                try:
+                    tools_output = json.dumps(tools_output, ensure_ascii=False, default=str)
+                except Exception:
+                    # Fallback to string representation if serialization fails
+                    tools_output = str(tools_output)
             except KeyError:
                 logger.error(f"Service '{action_name}' not found in tools registry.")
                 tools_output = f"Service '{action_name}' not found. Please check the service name and try again."
@@ -78,7 +83,7 @@ class Agent():
             #logger.debug(f"check_prompt: {check_prompt}")
             self.state.handle_observation(tools_output)
 
-        if self.state.looper.is_maxed_out():
+        if self.state.looper.is_maxed_out() and not self.state.looper.is_breaked():
             falled_back_response = f"""
             Final Answer:
             {{
