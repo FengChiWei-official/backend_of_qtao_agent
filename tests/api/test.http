@@ -24,8 +24,8 @@ POST 127.0.0.1:8000/api/v1/login
 content-type: application/json
 
 {
-  "username": "shenjie",
-  "password": "qwq233383"
+  "username": "mia",
+  "password": "1234"
 }
 
 

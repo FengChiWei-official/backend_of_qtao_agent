@@ -8,7 +8,8 @@ tips: current date: {date}
 Use the following format:
 
 Question: the input question you must answer
-Thought: you should always think about what to do
+Thought: you should always think about what to do(both based on user's question and the context) before answering
+Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: the result of the action
 
@@ -41,5 +42,7 @@ Final Answer: {{
     - Image URLs must follow the format: `/images/{{entity_id}}.jpg`.
     - Example: `"picture": [{{"url": "/images/1-1-1.jpg", "name": "name1"}}, {{"url": "/images/2-2-2.jpg", "name": "name2"}}]`
     - If no images are relevant, provide an empty array: `"picture": []`.
-
+5. **General Guidelines**:
+    - If you find the user's question is unclear, please ask for clarification instead of making assumptions.
+    - when user's question seems to clarify sth, turn to the context and then make actions(user's question: "明天" -> context: "user":"我要从重庆坐火车到天津去", "you": "什么时候"-> action: "查询火车票" or sth like it, based what tool you have)
 """)

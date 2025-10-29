@@ -40,9 +40,10 @@ class Agent():
             logger.debug(str(check_prompt))
             response = self.llm(self.state.generate_history_with_context_and_prompt())
             logger.debug(f"LLM response: {response}")  # 记录 response 内容
-
-            self.state.handle_llm_response_and_try_to_stop(response)
-            
+            try:
+                self.state.handle_llm_response_and_try_to_stop(response)
+            except ValueError as e:
+                logger.error(f"Error parsing LLM response: {e}")
             if self.state.looper.is_maxed_out():
                 break
             self.state.looper.increment()
@@ -62,8 +63,12 @@ class Agent():
                 # Pass a deep copy of action_input to tools so they don't mutate the State's internal dict
                 #tools_output = str(service(copy.deepcopy(action_input), self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
                 copy_input = json.loads(json.dumps(action_input))  # another way to deep copy
-                tools_output = str(copy_input, self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False))
-            
+                tools_output = service(
+                    copy_input, 
+                    self.user_info,
+                    self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)
+                    )
+                tools_output = str(tools_output)
             except KeyError:
                 logger.error(f"Service '{action_name}' not found in tools registry.")
                 tools_output = f"Service '{action_name}' not found. Please check the service name and try again."

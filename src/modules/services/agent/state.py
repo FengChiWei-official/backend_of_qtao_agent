@@ -162,6 +162,8 @@ class State:
         """
         初始化thought_action状态
         :param thought_action: thought_action状态字典
+        :return: None
+        :raises ValueError: 如果无法解析 Thought 或 Action
         """
         # 提取 Thought
         thought_match = re.search(r"Thought:\s*(.*?)\s*Action:", raw_thought_action, re.DOTALL)
@@ -170,7 +172,9 @@ class State:
         # 提取 Action
         action_match = re.search(r"Action:\s*(.*?)\s*Action Input:", raw_thought_action, re.DOTALL)
         action = action_match.group(1).strip() if action_match else ""
-
+        if thought == "" or action == "":
+            tools_output = f"Final Answer:{{ \"answer\": \"对不起，我无法找到Thought，和Action。\n\n从原始回复:{raw_thought_action}\n\n\", \"picture\": [] }}"
+            raise ValueError(f"无法解析 Thought 或 Action，请确保格式正确。\nRaw input: {raw_thought_action}")
         # 提取 Action Input
         input_match = re.search(r"Action Input:\s*(.*)", raw_thought_action, re.DOTALL)
         action_input = input_match.group(1).strip() if input_match else ""
@@ -233,7 +237,7 @@ class State:
             answer = parsed_answer.get("answer", "对不起，我无法提供有效的回答。")
             picture = parsed_answer.get("picture", [])
         except json.JSONDecodeError as e:
-            raise ValueError(f"无法解析最终答案: {e}")
+            raise ValueError(f"无法解析最终答案") from str(e.msg)  # Modified line
 
         self.__final_answer = {
             "thought": thought,
@@ -270,6 +274,8 @@ class State:
         """
         启动thought_action状态
         :param raw_thought_action: 原始thought_action状态字符串
+        :return: None
+        :raises ValueError: 如果无法解析 Thought 或 Action(from self.__start_thought_action_parse_text_and_save)
         """
         self.__start_thought_action_parse_text_and_save(raw_thought_action)
     
@@ -304,6 +310,8 @@ class State:
         """
         处理LLM的响应, 要不然start—thought_action， 要不然close-context
         :param response: LLM的响应字符串
+        :return: None
+        :raises ValueError: 如果无法解析 Thought 或 Action(from self.__start_thought_action_parse_text_and_save)
         """
         if self._is_containning_final_answer(response):
             self._set_final_answer_close_context_and_push_history(response)
@@ -311,7 +319,7 @@ class State:
         else:  
             # thought_action 的原始状态不关注，直接覆盖
             self._start_thought_action(response)
-    
+  
     def handle_observation(self, observation: str):
         """
         处理观察结果
@@ -386,3 +394,4 @@ class State:
             date=str(datetime.datetime.now()),  # Example of adding a timestamp
             tool_names=", ".join(self.__tools_names)  # Example of adding tool names
         )
+    
