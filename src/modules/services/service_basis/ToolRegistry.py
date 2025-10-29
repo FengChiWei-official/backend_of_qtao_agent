@@ -31,7 +31,7 @@ class Registry:
         
         self._services[service_instance.name] = service_instance
 
-    def get_service(self, service_name):
+    def get_service(self, service_name:str) -> Tool:
         if service_name not in self._services:
             raise KeyError(f"Service '{service_name}' is not registered.")
         return self._services[service_name]

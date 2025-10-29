@@ -11,6 +11,7 @@ from src.modules.services.business.record_bussiness import DialogueRecordBusines
 from src.utils.chatgpt import feed_LLM_full, gather_llm_output
 from src.modules.services.service_basis.ToolRegistry import Registry
 from src.modules.services.service_basis.user_info import UserInfo
+from src.modules.services.service_basis.basis.tool import Tool
 import copy
 
 import logging
@@ -59,10 +60,10 @@ class Agent():
                 continue
 
             try:
-                service = self.tools.get_service(action_name)
+                service: Tool = self.tools.get_service(action_name)
                 # Pass a deep copy of action_input to tools so they don't mutate the State's internal dict
                 #tools_output = str(service(copy.deepcopy(action_input), self.user_info, self.state.generate_history_with_context_and_prompt(is_containing_prompt=False)))
-                copy_input = json.loads(json.dumps(action_input))  # another way to deep copy
+                copy_input = copy.deepcopy(action_input) # another way to deep copy
                 tools_output = service(
                     copy_input, 
                     self.user_info,
@@ -73,8 +74,18 @@ class Agent():
                 logger.error(f"Service '{action_name}' not found in tools registry.")
                 tools_output = f"Service '{action_name}' not found. Please check the service name and try again."
 
-            check_prompt = self.state.generate_history_with_context_and_prompt()
-            logger.debug(f"check_prompt: {check_prompt}")
+            #check_prompt = self.state.generate_history_with_context_and_prompt()
+            #logger.debug(f"check_prompt: {check_prompt}")
             self.state.handle_observation(tools_output)
 
+        if self.state.looper.is_maxed_out():
+            falled_back_response = f"""
+            Final Answer:
+            {{
+                    "answer": "I'm sorry, I couldn't arrive at a final answer within the allowed number of steps.",
+                    "picture": []
+                }}
+            """
+            self.state.handle_max_loop_reached(falled_back_response)
+            logger.warning("Maximum loop count reached; generating final answer.")
         return self.state.generate_final_answer()

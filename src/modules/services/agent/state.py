@@ -245,6 +245,13 @@ class State:
             "picture": picture
         }
 
+    def is_seted_final_answer(self) -> bool:
+        """
+        检查是否已设置最终答案
+        :return: True if final answer is set, False otherwise
+        """
+        return bool(self.__final_answer)
+    
     def _is_containning_final_answer(self, raw_actions_or_answer) -> bool:
         """
         检查是否处于完成状态
@@ -305,6 +312,8 @@ class State:
         
         self.looper.reset()
 
+    def handle_max_loop_reached(self, response: str):
+        self._set_final_answer_close_context_and_push_history(response)
 
     def handle_llm_response_and_try_to_stop(self, response: str):
         """

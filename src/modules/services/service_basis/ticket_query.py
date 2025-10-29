@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 
 import os, sys
 
@@ -137,6 +138,13 @@ class TicketQuery(Tool):
         """
 
         l_info = []
+
+        # 防御性编程：如果收到的 parameter 不是 dict，尝试解析 JSON 字符串；否则返回错误信息
+        if not isinstance(parameter, dict):
+            try:
+                parameter = json.loads(parameter)
+            except Exception:
+                return [f'参数格式错误: 期望 dict 或 JSON 字符串, 收到 {type(parameter).__name__}']
         
         # 安全获取参数，添加缺失值检查
         try:
@@ -285,7 +293,14 @@ class TicketQueryMappingDate(TicketQuery):
         :return: 查询的票务信息
         """
         # 处理日期映射
-        
+
+        # 防御性编程：确保 parameter 是 dict（可能会被上游以字符串形式传入）
+        if not isinstance(parameter, dict):
+            try:
+                parameter = json.loads(parameter)
+            except Exception:
+                return [f'参数格式错误: 期望 dict 或 JSON 字符串, 收到 {type(parameter).__name__}']
+
         if parameter.get('发车日期') is None:
             parameter['发车日期'] = parameter.get('到站日期')
         if parameter.get('到站日期') is None:

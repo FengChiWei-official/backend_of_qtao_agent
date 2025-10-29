@@ -104,7 +104,7 @@ content-type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": ""
+  "name": "测试会话"
 }
 
 
