@@ -351,13 +351,17 @@ class TicketQueryMappingDate(TicketQuery):
         for item in ans:
             if isinstance(item, dict):
                 item = item.copy()
-                if '出发日期' in item:
-                    final_dp_time = pd.to_datetime(original_departure_date) + (item['出发日期'] - to_map_departure_date)
-                    item['出发日期'] = final_dp_time.strftime('%Y-%m-%d')
-                if '到达日期' in item:
-                    final_arrv_time = pd.to_datetime(original_arrive_date) + (item['到达日期'] - to_map_arrive_date)
-                    item['到达日期'] = final_arrv_time.strftime('%Y-%m-%d')
-            remapped_ans.append(item)
+                # 还原出发日期
+                delta_duration = pd.Timedelta(item['到达日期'] - item['出发日期'])
+                if original_departure_date is not None:
+                    item["出发日期"] = pd.to_datetime(original_departure_date).strftime('%Y-%m-%d')
+                    item["到达日期"] = (pd.to_datetime(original_departure_date) + delta_duration).strftime('%Y-%m-%d')
+                elif original_arrive_date is not None:
+                    item["到达日期"] = pd.to_datetime(original_arrive_date).strftime('%Y-%m-%d')
+                    item["出发日期"] = (pd.to_datetime(original_arrive_date) - delta_duration).strftime('%Y-%m-%d')
+                else:
+                    raise ValueError("无法还原日期，缺少原始的出发或到达日期")
+                remapped_ans.append(item)
         # 返回重映射后的结果列表
         return remapped_ans
 if __name__ == '__main__':
