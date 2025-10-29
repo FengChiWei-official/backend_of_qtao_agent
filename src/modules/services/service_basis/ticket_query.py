@@ -361,6 +361,9 @@ class TicketQueryMappingDate(TicketQuery):
                     item["出发日期"] = (pd.to_datetime(original_arrive_date) - delta_duration).strftime('%Y-%m-%d')
                 else:
                     raise ValueError("无法还原日期，缺少原始的出发或到达日期")
+                
+                item["出发时间"] = item["出发时间"].strftime('%H:%M:%S')
+                item["到达时间"] = item["到达时间"].strftime('%H:%M:%S')
                 remapped_ans.append(item)
         # 返回重映射后的结果列表
         return remapped_ans
