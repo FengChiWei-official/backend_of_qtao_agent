@@ -1,59 +1,35 @@
-# AgentManager: 管理多个 agent 实例，每个实例对应一个 sessionid
+# AgentManager: 管理 agent 实例的创建和使用
+# 修改说明：移除内存缓存 (_agents)，改为每次请求创建新的 Agent 实例，以实现无状态化。
+# 这解决了在多 worker 部署下的状态不一致问题，并避免了内存泄漏风险。
+
 from typing import Dict
-import threading
 from datetime import datetime
 from src.modules.services.agent.agent import Agent
 from src.modules.services.service_basis.ToolRegistry import Registry
-from src.modules.services.service_basis.basis.tool import Tool
 from src.modules.services.business.record_bussiness import DialogueRecordBusiness
 
 class AgentManager:
     def __init__(self, tools: Registry, record_business: DialogueRecordBusiness, prompt_template: str):
-        self._agents: Dict[str, Agent] = {}
-        self._last_activate_time: Dict[str, datetime] = {}
         self._tools = tools
         self._record_business = record_business
         self._prompt_template = prompt_template
-        self.lock = threading.Lock()
-        # 用于清理 agent 的事件
-        # 例如在应用关闭时可以设置此事件，通知所有 agent 进行清理
-        # 这可以帮助释放资源或保存状态
-        self.cleanup_thread = threading.Thread(target=self.cleanup_inactive_agents, daemon=True)
-        self.cleanup_thread.start()
-
-    def _get_agent(self, user_id: str, sessionid: str) -> Agent:
-        with self.lock:
-            if sessionid not in self._agents:
-                self._agents[sessionid] = Agent(user_id, sessionid, self._record_business, self._tools, self._prompt_template)
-            # 更新最后激活时间
-            self._last_activate_time[sessionid] = datetime.now()
-            return self._agents[sessionid]
-
-    def _remove_agent(self, sessionid: str):
-        with self.lock:
-            if sessionid in self._agents:
-                del self._agents[sessionid]
 
     def get_and_use_agent(self, user_id: str, sessionid: str, query: str) -> dict:
         """
-        获取并使用 agent 实例
+        创建并使用一个新的 agent 实例来处理请求。
+        Agent 是无状态的，或者说它的状态完全由数据库中的历史记录决定。
+        每次请求都从数据库重新加载上下文，处理完毕后销毁实例。
+        
         :param user_id: 用户ID
         :param sessionid: 会话ID
-        :return: Agent 实例
+        :param query: 用户输入
+        :return: Agent 处理结果
         """
-        agent = self._get_agent(user_id, sessionid)
-        with agent.lock:
-            ans = agent(query)
-        return ans
-    
-    def cleanup_inactive_agents(self, timeout: int = 300):
-        """
-        清理超过指定时间未激活的 agent 实例
-        :param timeout: 超时时间，单位为秒
-        """
-        current_time = datetime.now()
-        with self.lock:
-            for sessionid, last_time in list(self._last_activate_time.items()):
-                if (current_time - last_time).total_seconds() > timeout:
-                    self._remove_agent(sessionid)
-                    del self._last_activate_time[sessionid]
+        # 创建新的 Agent 实例
+        agent = Agent(user_id, sessionid, self._record_business, self._tools, self._prompt_template)
+        
+        # 直接调用 agent 处理逻辑
+        # 由于每次都是新实例，不需要额外的锁机制（除非 Agent 内部有共享资源的并发写操作，
+        # 但通常每个请求都在独立的线程/协程中处理，且 Agent 实例是局部的）
+        return agent(query)
+
