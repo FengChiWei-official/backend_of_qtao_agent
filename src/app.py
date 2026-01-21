@@ -44,6 +44,7 @@ conversation_business_instance = ConversationBusiness(db_config)
 record_business_instance = DialogueRecordBusiness(db_config)
 
 # 注册工具
+"""
 mealservice_name = "订餐服务"
 mealservice_desc = '''
 订餐服务：本接口用于从数据库中匹配最符合用户偏好与要求的餐厅或菜品。接口输入格式：该接口无需输入参数，填 {"parameter": {}} 即可。
@@ -52,6 +53,7 @@ note: 调用了这个工具就要输出 images = ["<图片链接1>", "<图片链
      链接格式： images/<菜品id>.jpg， 也就是接口输出中的"\\d_\\d_\\d"
      图片名称： 就是对应菜品的名字，比如假如你观察到observation 有一句： 推荐小笼包（2-3-4），你就要输出 images = ["/images/2-3-4.jpg", "小笼包"]，注意图片链接和图片名称之间用逗号分隔开来
 。'''
+"""
 meal_top_k = 3
 registry = Registry()
 registry.register(MealService())
