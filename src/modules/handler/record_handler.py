@@ -36,3 +36,19 @@ def chat(req: ChatRequest, current_user=Depends(get_current_user), agent_manager
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@record_router.post("/chat/stream", summary="会话对话（流式）", response_model=BaseResponse)
+def chat_stream(req: ChatRequest, current_user=Depends(get_current_user), agent_manager: 'AgentManager' = Depends(get_agent_manager), ownership_checker = Depends(check_ownership_function_generator)):
+    try:
+        user_id = current_user
+        # user 一定要拥有session
+        if not ownership_checker(user_id, req.session_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="没有权限访问该会话")
+        # 开始锁 agent
+        answer_generator = agent_manager.stream_agent(user_id, req.session_id, req.query)
+        # 结束锁 agent
+        return BaseResponse(msg="success", data=answer_generator)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

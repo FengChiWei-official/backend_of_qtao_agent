@@ -2,6 +2,7 @@ from fastapi import Header, HTTPException, status
 from typing import Optional
 import jwt
 
+#todo： 替换为更安全的密钥管理方式
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 
